@@ -1279,7 +1279,9 @@ __NODES__
     const nodes = nodesForSelection();
     if (!nodes.length) { setOut("", "json", "No nodes", true, "No nodes for this selection. Change the endpoint or the port."); return; }
 
-    const tag = (n) => `${mode.toUpperCase()} | ${n.prefix} | ${n.server} | ${n.port} | ${n.suffix}`;
+    const FLAG_EMOJI = { US: "\u{1F1FA}\u{1F1F8}", Germany: "\u{1F1E9}\u{1F1EA}", Finland: "\u{1F1EB}\u{1F1EE}" };
+    const withFlag = (prefix) => prefix.replace(/^(US|Germany|Finland)\b/, (m) => m + " " + FLAG_EMOJI[m]);
+    const tag = (n) => `${mode.toUpperCase()} | ${withFlag(n.prefix)} | ${n.server} | ${n.port} | ${n.suffix}`;
     const label = nodes.length + (nodes.length === 1 ? " node" : " nodes") + (COMBINED[$("endpoint").value] ? " (combined)" : " (single endpoint)");
 
     if (client === "clash") {
@@ -1289,7 +1291,7 @@ __NODES__
       if (isL4 && dnsList.every((d) => PLAIN_DNS_RE.test(d))) dnsList = ["https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"];
       const sniFinal = isL4 ? (zero ? "zt-masque-proxy.cloudflareclient.com" : "consumer-masque-proxy.cloudflareclient.com") : sni;
       const netLine = mode === "h2" && !isL4 ? "\n    network: h2" : isL4 ? "\n    network: h3-l4proxy" : "";
-      const nodeName = (n) => `${n.prefix} | ${n.server} | ${n.port} | ${n.suffix}`;
+      const nodeName = (n) => `${withFlag(n.prefix)} | ${n.server} | ${n.port} | ${n.suffix}`;
       const proxiesYaml = nodes.map((n) => `  - name: "${nodeName(n)}"
     type: masque
     server: ${n.server}
