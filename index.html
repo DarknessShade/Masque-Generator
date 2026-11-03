@@ -118,6 +118,13 @@ footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
 .cl-link{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;border:1px solid #2c2c2c;background:#0d0d0d;color:var(--ac);font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:.2s}
 .cl-link:hover{background:#171717;border-color:#4a4a50;color:#fff}
 .cl-link svg{width:13px;height:13px;flex:none}
+.fallback{margin-top:12px;padding:12px 14px;border:1px solid rgba(251,191,36,.35);border-radius:10px;background:#140f02;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+#fallbackBtn,#fallbackBtn:hover{background:#06b6d4;color:#000;border:0}
+#fallbackBtn:hover{background:#22d3ee;box-shadow:0 6px 20px rgba(34,211,238,.25)}
+#fallbackBtn span{color:#000}
+.fallback>span{font-size:13px;color:var(--warn);flex:1 1 220px}
+.foot-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.foot-links .btn{flex:none}
 [hidden]{display:none!important}
 @media(max-width:850px){.out-wrap{grid-template-columns:1fr}.btn-stack{flex-direction:row}.btn-stack .btn{min-height:64px}}
 @media(max-width:620px){
@@ -158,6 +165,10 @@ footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
     </div>
     <div class="status" id="keyStatus">No key yet. Generate one or import a usque JSON file.</div>
     <div class="apis" id="apiChips" aria-label="API pool"></div>
+    <div class="fallback" id="fallbackBox" hidden>
+      <span>Key generation failed. Use this link to generate a key:</span>
+      <a class="btn primary" id="fallbackBtn" href="https://masque-generator.configwireguard.workers.dev/" target="_blank" rel="noopener noreferrer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg><span>Generate key here</span></a>
+    </div>
     <div class="grid2" style="margin-top:16px">
       <div class="field full"><label for="privKey">Private key (base64)</label><textarea id="privKey" spellcheck="false" placeholder="MHcCAQEE..."></textarea></div>
       <div class="field full"><label for="pubKey">Endpoint public key</label><textarea id="pubKey" spellcheck="false" placeholder="Filled automatically from the API response"></textarea></div>
@@ -258,6 +269,11 @@ footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
     <summary>Clients</summary>
     <div class="cl-body" id="clientsList"></div>
   </details>
+  <div class="foot-links">
+    <a class="btn sm" title="Telegram" aria-label="Telegram" href="https://t.me/ConfigWireguard" target="_blank" rel="noopener noreferrer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 3 2.5 10.5l6 2.2 2.2 6 3-3.7 4.3 3.2z"/><path d="m8.5 12.7 7-4.7"/></svg></a>
+    <a class="btn sm" title="Web" aria-label="Web" href="https://masque-generator.configwireguard.workers.dev/" target="_blank" rel="noopener noreferrer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></a>
+    <a class="btn sm" title="GitHub" aria-label="GitHub" href="https://github.com/DarknessShade/Masque-Generator" target="_blank" rel="noopener noreferrer"><svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+  </div>
 </footer>
 
 <script>
@@ -1506,8 +1522,9 @@ __NODES__
   $("genBtn").addEventListener("click", async () => {
     const btn = $("genBtn"); btn.classList.add("loading"); btn.disabled = true;
     Object.keys(rndCache).forEach((k) => delete rndCache[k]);
+    $("fallbackBox").hidden = true;
     try { await register(); }
-    catch (err) { $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + (err && err.message || err); }
+    catch (err) { $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + (err && err.message || err); $("fallbackBox").hidden = false; }
     finally { btn.classList.remove("loading"); btn.disabled = false; generate(); }
   });
 
