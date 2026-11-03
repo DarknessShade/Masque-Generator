@@ -1,7 +1,7 @@
 <div align="center">
   <h1>🎭 Masque-Generator</h1>
   <p><b>A powerful, elegant, and web-based tool for generating WARP MASQUE configurations.</b></p>
-  <p><b>ابزاری قدرتمند و زیبا برای ساخت خودکار کانفیگ‌های WARP MASQUE</b></p>
+  <p><b>ابزاری قدرتمند برای ساخت خودکار کانفیگ‌های WARP MASQUE</b></p>
 
   [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg?style=for-the-badge)](https://darknessshade.github.io/Masque-Generator/)
   [![GitHub stars](https://img.shields.io/github/stars/DarknessShade/Masque-Generator?style=for-the-badge&color=orange)](https://github.com/DarknessShade/Masque-Generator/stargazers)
@@ -49,25 +49,6 @@ Our generated configs are fully tested and compatible with:
 3. **Customize Settings**: Select your preferred client (e.g., v2rayNG), choose the protocol (H2/H3), and pick your routing (Iran/China).
 4. **Copy & Connect**: Copy the final configuration from Step 3 and paste it into your proxy client. You are good to go! 🌐
 
----
-
-## 📸 Screenshots | تصاویر محیط برنامه
-
-> *(💡 **Tip for developer:** Add a screenshot of your website here by replacing the link below)*
-> *(اسکرین‌شات سایتت رو آپلود کن و لینکش رو جایگزین لینک زیر کن)*
-
-<div align="center">
-  <img src="https://via.placeholder.com/800x450.png?text=Upload+Your+App+Screenshot+Here" alt="Masque Generator Interface" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-</div>
-
----
-
-## 🤝 Contributing | مشارکت
-
-Contributions, issues, and feature requests are always welcome!  
-Feel free to check the [issues page](https://github.com/DarknessShade/Masque-Generator/issues).
-
-برای مشارکت در پروژه، گزارش باگ یا پیشنهاد ویژگی‌های جدید، خوشحال می‌شم به صفحه Issues سر بزنید و پول‌ریکوئست (PR) بفرستید.
 
 ---
 
