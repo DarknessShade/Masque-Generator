@@ -2,7 +2,14 @@
 
 # 🎭 MASQUE Config Generator
 
-### WARP MASQUE → Xray · Clash · Shadowrocket · MahsaNG
+<div align="center">
+
+<img src="https://github.com/DarknessShade/DarknessShade/blob/main/Image/masque-how-it-works.svg" alt="masque" width="100%" />
+<br/>
+
+<div align="center">
+
+### WARP MASQUE → Xray • MahsaNG • Happ • Streisand • Clash • Shadowrocket • MahsaNG •
 
 **A zero-install, single-page web tool that generates Cloudflare WARP MASQUE configs for the most popular proxy clients, in seconds.**
 
@@ -765,6 +772,12 @@ npx serve .
 </div>
 
 <img src="https://github.com/DarknessShade/DarknessShade/blob/main/Image/divider.png?raw=true" width="100%" alt="divider">
+
+<div align="center">
+
+<div align="center">
+<img src="https://github.com/DarknessShade/DarknessShade/blob/main/Image/masque-generator-flow.svg" alt="masque" width="100%" />
+<br/>
 
 <div align="center">
 
