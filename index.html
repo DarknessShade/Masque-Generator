@@ -900,8 +900,11 @@ __NODES__
 
   // "ranged": expanded over the selected port(s); "fixed": always use their own port
   const COMBINED = {
+    rnd4: { label: "Range | 162.159.198.0/24 (IPv4) (default)", ranged: [], fixed: [] },
+    rnd6: { label: "Range | 2606:4700:103::/64 (IPv6)", ranged: [], fixed: [] },
+    rnd: { label: "Range | 162.159.198.0/24 + 2606:4700:103::/64", ranged: [], fixed: [] },
     all: {
-      label: "Combined | IPv4 + IPv6 (default)",
+      label: "Combined | IPv4 + IPv6",
       ranged: [...OFF4, ...OFF6],
       fixed: [...fx(US, "US IPv6"), ...fx(DE, "Germany IPv6"), ...fx(FI, "Finland IPv6"), ...fx(BK4, "Backup"), ...fx(BK6, "Backup IPv6")]
     },
@@ -926,10 +929,7 @@ __NODES__
         ...fx(["fi.v6.zt.bestcf.eu.cc", "2001:67c:2b0:db32::a29f:c501", "2001:67c:2b0:db32::a29f:c502"], "Finland IPv6"),
         ...["8095", "443", "8443", "4443"].map((port) => ({ server: "2606:4700:102::2", port, prefix: "Official IPv6" }))
       ]
-    },
-    rnd: { label: "Range | 162.159.198.0/24 + 2606:4700:103::/64", ranged: [], fixed: [] },
-    rnd4: { label: "Range | 162.159.198.0/24 (IPv4)", ranged: [], fixed: [] },
-    rnd6: { label: "Range | 2606:4700:103::/64 (IPv6)", ranged: [], fixed: [] }
+    }
   };
   // Random-range endpoints: which families to draw from
   const RAND = { rnd: { v4: true, v6: true }, rnd4: { v4: true }, rnd6: { v6: true } };
@@ -952,22 +952,30 @@ __NODES__
   ];
 
   const SNIS = [
-    ["consumer-masque.cloudflareclient.com", "MASQUE default | consumer-masque.cloudflareclient.com (default)"],
-    ["www.microsoft.com", "Microsoft | www.microsoft.com"],
-    ["www.apple.com", "Apple | www.apple.com"], ["www.bing.com", "Bing | www.bing.com"],
-    ["www.oracle.com", "Oracle | www.oracle.com"], ["www.deepseek.com", "DeepSeek | www.deepseek.com"],
-    ["www.kimi.ai", "Moonshot (Kimi) | www.kimi.ai"], ["www.um.edu.mo", "University of Macau | www.um.edu.mo"],
-    ["www.hku.hk", "HKU | www.hku.hk"], ["www.ntu.edu.sg", "NTU Singapore | www.ntu.edu.sg"],
-    ["www.ox.ac.uk", "Oxford | www.ox.ac.uk"], ["www.harvard.edu", "Harvard | www.harvard.edu"],
-    ["www.mit.edu", "MIT | www.mit.edu"], ["www.stanford.edu", "Stanford | www.stanford.edu"],
-    ["cdn.jsdelivr.net", "CDN | cdn.jsdelivr.net"], ["www.visa.cn", "VISA China | www.visa.cn"],
-    ["visa.com", "VISA US | visa.com"], ["www.speedtest.net", "SpeedTest | www.speedtest.net"],
-    ["www.cloudflare.com", "Cloudflare website | www.cloudflare.com"],
+    ["www.cloudflare.com", "Cloudflare website | www.cloudflare.com (default)"],
     ["speed.cloudflare.com", "Cloudflare speed test | speed.cloudflare.com"],
     ["cdnjs.cloudflare.com", "Cloudflare CDN | cdnjs.cloudflare.com"],
     ["cloudflare.dev", "Cloudflare developers | cloudflare.dev"],
     ["research.cloudflare.com", "Cloudflare research | research.cloudflare.com"],
-    ["zt-masque.cloudflareclient.com", "ZeroTrust default | zt-masque.cloudflareclient.com"]
+    ["consumer-masque.cloudflareclient.com", "MASQUE default | consumer-masque.cloudflareclient.com"],
+    ["www.deepseek.com", "DeepSeek | www.deepseek.com"],
+    ["www.speedtest.net", "SpeedTest | www.speedtest.net"],
+    ["zt-masque.cloudflareclient.com", "ZeroTrust default | zt-masque.cloudflareclient.com"],
+    ["www.microsoft.com", "Microsoft | www.microsoft.com"],
+    ["www.apple.com", "Apple | www.apple.com"],
+    ["www.bing.com", "Bing | www.bing.com"],
+    ["www.oracle.com", "Oracle | www.oracle.com"],
+    ["www.kimi.ai", "Moonshot (Kimi) | www.kimi.ai"],
+    ["www.um.edu.mo", "University of Macau | www.um.edu.mo"],
+    ["www.hku.hk", "HKU | www.hku.hk"],
+    ["www.ntu.edu.sg", "NTU Singapore | www.ntu.edu.sg"],
+    ["www.ox.ac.uk", "Oxford | www.ox.ac.uk"],
+    ["www.harvard.edu", "Harvard | www.harvard.edu"],
+    ["www.mit.edu", "MIT | www.mit.edu"],
+    ["www.stanford.edu", "Stanford | www.stanford.edu"],
+    ["cdn.jsdelivr.net", "CDN | cdn.jsdelivr.net"],
+    ["www.visa.cn", "VISA China | www.visa.cn"],
+    ["visa.com", "VISA US | visa.com"]
   ];
 
   const DNSES = [
@@ -1090,7 +1098,7 @@ __NODES__
     const g2 = document.createElement("optgroup"); g2.label = "Single endpoint (one node)";
     SINGLES.forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; g2.appendChild(o); });
     ep.append(g1, g2);
-    ep.value = "all";
+    ep.value = "rnd4";
     fill($("port"), [["random", "All port combinations (default)"], ...PORTS.map((p) => [p, p === "443" ? "443 (standard port | beware of QoS throttling)" : p])]);
     fill($("sni"), SNIS);
     fill($("dns"), DNSES);
