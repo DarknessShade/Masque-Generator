@@ -926,8 +926,15 @@ __NODES__
         ...fx(["fi.v6.zt.bestcf.eu.cc", "2001:67c:2b0:db32::a29f:c501", "2001:67c:2b0:db32::a29f:c502"], "Finland IPv6"),
         ...["8095", "443", "8443", "4443"].map((port) => ({ server: "2606:4700:102::2", port, prefix: "Official IPv6" }))
       ]
-    }
+    },
+    rnd: { label: "Range | 162.159.198.0/24 + 2606:4700:103::/64", ranged: [], fixed: [] },
+    rnd4: { label: "Range | 162.159.198.0/24 (IPv4)", ranged: [], fixed: [] },
+    rnd6: { label: "Range | 2606:4700:103::/64 (IPv6)", ranged: [], fixed: [] }
   };
+  // Random-range endpoints: which families to draw from
+  const RAND = { rnd: { v4: true, v6: true }, rnd4: { v4: true }, rnd6: { v6: true } };
+  const rndCache = {};   // keeps the same random picks until the key is regenerated or the selection changes
+  const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
   // [value, label, prefix]
   const SINGLES = [
@@ -977,7 +984,7 @@ __NODES__
     ["2001:4860:4860::8888", "Google IPv6 | 2001:4860:4860::8888"]
   ];
 
-  const SITE_URL = "https://تست.pages.dev/";   // <- put your real site address here
+  const SITE_URL = "https://darknessshade.github.io/Masque-Generator/";
   const TG_URL = "https://t.me/ConfigWireguard";
   const NOTES = [
     "Please keep the Xray core and your v2ray client up to date; some clients may be incompatible",
@@ -1196,8 +1203,31 @@ __NODES__
   }
   function getCount() { const n = parseInt($("count").value, 10); return Math.min(10, Math.max(1, isNaN(n) ? 1 : n)); }
 
+  function randomNodes(ep, portSel, n) {
+    const key = ep + "|" + portSel + "|" + n;
+    if (!rndCache[key]) {
+      const w = RAND[ep];
+      const a = w.v4 && w.v6 ? Math.ceil(n / 2) : w.v4 ? n : 0, b = n - a;
+      const used = new Set(), out = [];
+      const port = () => (portSel === "random" ? PORTS[rint(0, PORTS.length - 1)] : portSel);
+      const hx = () => rint(0, 65535).toString(16);
+      const mk = (gen, prefix, cnt) => {
+        for (let g = 0; cnt > 0 && g < 1000; g++) {
+          const server = gen();
+          if (used.has(server)) continue;
+          used.add(server); out.push({ server, port: port(), prefix }); cnt--;
+        }
+      };
+      mk(() => "162.159.198." + rint(1, 254), "Official", a);
+      mk(() => ["2606", "4700", "103", "0", hx(), hx(), hx(), hx()].join(":"), "Official IPv6", b);
+      rndCache[key] = out;
+    }
+    return rndCache[key].map((x) => ({ ...x, suffix: SUFFIX }));
+  }
+
   function nodesForSelection() {
     const ep = $("endpoint").value, portSel = $("port").value, n = getCount();
+    if (RAND[ep]) return randomNodes(ep, portSel, n);
     const all = [];
     const ranged = (server, prefix) => (portSel === "random" ? PORTS : [portSel]).forEach((port) => all.push({ server, port, prefix }));
     if (COMBINED[ep]) {
@@ -1465,6 +1495,7 @@ __NODES__
 
   $("genBtn").addEventListener("click", async () => {
     const btn = $("genBtn"); btn.classList.add("loading"); btn.disabled = true;
+    Object.keys(rndCache).forEach((k) => delete rndCache[k]);
     try { await register(); }
     catch (err) { $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + (err && err.message || err); }
     finally { btn.classList.remove("loading"); btn.disabled = false; generate(); }
@@ -1508,6 +1539,7 @@ __NODES__
   });
   $("clearBtn").addEventListener("click", () => {
     ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => ($(id).value = ""));
+    Object.keys(rndCache).forEach((k) => delete rndCache[k]);
     $("keyStatus").className = "status"; $("keyStatus").textContent = "No key yet. Generate one or import a usque JSON file.";
     generate();
   });
