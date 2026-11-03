@@ -2,12 +2,13 @@
 
 # 🎭 MASQUE Config Generator
 
+
 <div align="center">
 
 <img src="https://github.com/DarknessShade/DarknessShade/blob/main/Image/masque-how-it-works.svg" alt="masque" width="100%" />
 <br/>
 
-<div align="center">
+</div>
 
 ### WARP MASQUE → Xray • MahsaNG • Happ • Streisand • Clash • Shadowrocket • MahsaNG •
 
