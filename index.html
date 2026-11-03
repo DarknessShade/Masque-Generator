@@ -168,6 +168,7 @@ footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
     <div class="fallback" id="fallbackBox" hidden>
       <span>Key generation failed. Use this link to generate a key:</span>
       <a class="btn primary" id="fallbackBtn" href="https://masque-generator.configwireguard.workers.dev/" target="_blank" rel="noopener noreferrer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg><span>Generate key here</span></a>
+      <button class="btn" id="importNowBtn" type="button"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg><span class="bt">Import Key Now</span></button>
     </div>
     <div class="grid2" style="margin-top:16px">
       <div class="field full"><label for="privKey">Private key (base64)</label><textarea id="privKey" spellcheck="false" placeholder="MHcCAQEE..."></textarea></div>
@@ -1486,6 +1487,7 @@ __NODES__
     $("privKey").value = String(cfg.private_key).trim();
     $("pubKey").value = pemBody(cfg.endpoint_pub_key);
     $("ipv4").value = String(cfg.ipv4); $("ipv6").value = cfg.ipv6 ? String(cfg.ipv6) : "";
+    savePub($("pubKey").value);
     $("keyStatus").className = "status ok";
     $("keyStatus").textContent = `✓ Key loaded ${label}. Account id: ${cfg.id || "n/a"}`;
   }
@@ -1528,6 +1530,64 @@ __NODES__
     finally { btn.classList.remove("loading"); btn.disabled = false; generate(); }
   });
 
+  /* ---- Import Key Now: pick a key from the public list ---- */
+  const LIST_URL = "https://masque.configwireguard1.workers.dev/api/list";
+  // Optional: put the (shared) WARP endpoint public key here if you know it, so the list import works on first use
+  const DEFAULT_PUB = "";
+  let listCache = null;
+  const listUsed = new Set();
+  function savePub(v) { try { const b = pemBody(v); if (b) localStorage.setItem("masque_pub", b); } catch (_) {} }
+  function cachedPub() { try { return localStorage.getItem("masque_pub") || ""; } catch (_) { return ""; } }
+
+  async function importFromList() {
+    if (!listCache) {
+      const r = await fetch(LIST_URL, { method: "GET", credentials: "omit", referrerPolicy: "no-referrer", signal: AbortSignal.timeout(30000) });
+      if (!r.ok) throw new Error("list API returned HTTP " + r.status);
+      let d; try { d = await r.json(); } catch (_) { throw new Error("list API did not return JSON"); }
+      const arr = Array.isArray(d) ? d : (d && d.keys);
+      const seen = new Set();
+      listCache = (arr || []).filter((x) => {
+        if (!x || !(x.private_key_raw || x.private_key) || !x.address) return false;
+        const id = x.id || x.private_key_raw || x.private_key;
+        if (seen.has(id)) return false;
+        seen.add(id); return true;
+      });
+      if (!listCache.length) { listCache = null; throw new Error("the list is empty"); }
+    }
+    let free = listCache.map((_, i) => i).filter((i) => !listUsed.has(i));
+    if (!free.length) { listUsed.clear(); free = listCache.map((_, i) => i); }
+    const idx = free[rint(0, free.length - 1)];
+    listUsed.add(idx);
+    const k = listCache[idx];
+
+    const addrs = String(k.address).split(",").map((x) => x.trim().replace(/\/\d+$/, "")).filter(Boolean);
+    const v4 = addrs.find((a) => !a.includes(":")), v6 = addrs.find((a) => a.includes(":"));
+    if (!v4) throw new Error("the chosen entry has no IPv4 address");
+
+    // The list does not always carry the endpoint public key: use the one in the response, the field, or the last one seen
+    const pub = pemBody(k.endpoint_pub_key || k.endpoint_public_key || "") || pemBody($("pubKey").value) || cachedPub() || pemBody(DEFAULT_PUB);
+    if (!pub) throw new Error("the list has no endpoint public key. Generate or import one key first (it is remembered afterwards) or paste it into the Endpoint public key field");
+
+    $("privKey").value = pemBody(k.private_key_raw || k.private_key);
+    $("pubKey").value = pub; savePub(pub);
+    $("ipv4").value = v4; $("ipv6").value = v6 || "";
+    $("keyStatus").className = "status ok";
+    $("keyStatus").textContent = `✓ Key imported from the list (#${idx + 1} of ${listCache.length}). Press again for a different one.`;
+  }
+
+  $("importNowBtn").addEventListener("click", async () => {
+    const btn = $("importNowBtn"); btn.classList.add("loading"); btn.disabled = true;
+    Object.keys(rndCache).forEach((k) => delete rndCache[k]);
+    $("keyStatus").className = "status"; $("keyStatus").textContent = "Loading a key from the list ...";
+    try { await importFromList(); }
+    catch (err) {
+      listCache = null;
+      const m = err && err.name === "TypeError" ? "network or CORS error (the list API must send Access-Control-Allow-Origin)" : (err && err.message || err);
+      $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + m;
+    }
+    finally { btn.classList.remove("loading"); btn.disabled = false; generate(); }
+  });
+
   // Manual fallback: paste the JSON that an API link shows in the browser
   $("pasteBox").addEventListener("input", () => {
     const t = $("pasteBox").value.trim(); if (!t) return;
@@ -1556,7 +1616,7 @@ __NODES__
       const c = JSON.parse(await f.text());
       const miss = ["private_key", "endpoint_pub_key", "ipv4"].filter((x) => !c[x]);
       if (miss.length) throw new Error("Missing required fields: " + miss.join(", "));
-      $("privKey").value = String(c.private_key).trim(); $("pubKey").value = pemBody(c.endpoint_pub_key);
+      $("privKey").value = String(c.private_key).trim(); $("pubKey").value = pemBody(c.endpoint_pub_key); savePub(c.endpoint_pub_key);
       $("ipv4").value = String(c.ipv4); $("ipv6").value = c.ipv6 ? String(c.ipv6) : "";
       $("keyStatus").className = "status ok"; $("keyStatus").textContent = "✓ Imported " + f.name;
     } catch (err) {
