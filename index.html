@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MASQUE Config Generator | WARP MASQUE to Xray</title>
+<style>
+:root{--bg:#000;--card:#070707;--line:#1d1d1d;--tx:#f2f2f2;--mut:#8a8f8c;--ac:#d4d4d8;--ac2:#e7e7ea;--err:#f87171;--warn:#fbbf24;--field:#000;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#000;color:var(--tx);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+header{position:sticky;top:0;z-index:50;height:64px;display:flex;align-items:center;padding:0 max(14px,calc((100% - 1100px)/2));background:#000;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:clamp(18px,2.2vw,24px);letter-spacing:-.03em}
+h1 b{background:linear-gradient(90deg,#fff,#a1a1aa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.pill{padding:4px 12px;border:1px solid #2c2c2c;border-radius:99px;background:#0d0d0d;color:var(--ac);font-size:12px;font-weight:700;white-space:nowrap}
+.pill.warn{color:var(--warn);border-color:rgba(251,191,36,.35);background:#140f02}
+main{width:min(1100px,calc(100% - 28px));margin:20px auto 40px;display:grid;gap:18px}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:20px}
+.card>h2{margin:0 0 14px;font-size:1.1rem;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.card>h2 small{color:var(--mut);font-weight:400;font-size:.8rem;margin-left:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.grid2>*,.out-wrap>*{min-width:0}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+label,.lbl{font-size:13px;font-weight:600;color:var(--mut)}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--tx);font:inherit;padding:0 12px;height:42px;outline:0;transition:.2s}
+textarea{height:auto;min-height:74px;padding:10px 12px;font:12px/1.5 ui-monospace,Menlo,monospace;resize:vertical;word-break:break-all}
+input.mono{font:13px ui-monospace,Menlo,monospace}
+input:focus,select:focus,textarea:focus,.dd-btn:focus-visible{border-color:#6b6b72;box-shadow:0 0 0 3px rgba(212,212,216,.16)}
+.hint{color:var(--mut);font-size:12px;margin:2px 0 0}
+button{font:inherit;cursor:pointer}
+.ico{width:18px;height:18px;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:9px;border:1px solid #2c2c2c;background:#0d0d0d;color:var(--ac);font-weight:700;font-size:14px;transition:.2s;white-space:nowrap;text-decoration:none}
+.btn:hover:not(:disabled){background:#171717;border-color:#3a3a3a;transform:translateY(-1px)}
+.btn.primary{border:0;color:#000;background:linear-gradient(135deg,#ececee,#b9b9bf)}
+.btn.primary:hover:not(:disabled){background:linear-gradient(135deg,#fff,#cfcfd4);box-shadow:0 6px 20px rgba(255,255,255,.12)}
+.btn.ghost{background:transparent;color:var(--mut)}
+.btn.lg{padding:14px 32px;min-height:50px;font-size:16px;border-radius:11px}
+.btn.lg .ico{width:21px;height:21px}
+.btn.sm{width:36px;height:36px;padding:0;border-radius:8px}
+.btn.sm .ico{width:16px;height:16px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.loading{pointer-events:none;opacity:.7}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.status{font-size:13px;margin-top:10px;min-height:20px;color:var(--mut);word-break:break-word}
+.status.ok{color:var(--ac2)}.status.err{color:var(--err)}
+.apis{display:flex;flex-wrap:nowrap;gap:6px;margin-top:8px}
+.api{flex:1 1 0;min-width:0;text-align:center;white-space:nowrap;font:600 12px ui-monospace,Menlo,monospace;padding:5px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mut);transition:.2s}
+.api.next{border-color:#4a4a50;color:var(--ac)}
+.api.used{background:rgba(34,197,94,.15);color:#4ade80;border-color:#22c55e}
+.api.fail{color:var(--err);border-color:rgba(248,113,113,.4)}
+.toggle-row{display:flex;align-items:center;gap:12px;min-height:42px}
+.toggle{width:52px;height:28px;padding:2px;border:0;border-radius:99px;background:#262626;transition:background .2s;flex:none}
+.toggle span{display:block;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.4);transition:transform .18s,background .2s}
+.toggle.on{background:#d4d4d8}
+.toggle.on span{transform:translateX(24px);background:#111}
+/* client switcher */
+.switch{display:inline-flex;gap:3px;padding:3px;border-radius:12px;background:#0b0b0b;border:1px solid var(--line);max-width:100%}
+.switch button{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:9px;background:transparent;color:var(--mut);font-weight:700;padding:9px 13px;font-size:13px;line-height:1.25;transition:.2s}
+.switch button:hover:not(.active){color:var(--tx);background:#141414}
+.switch button.active{background:#e7e7ea;color:#000;box-shadow:0 1px 6px rgba(0,0,0,.6)}
+.os-tabs{display:grid;grid-template-columns:repeat(3,1fr);width:100%;margin-bottom:10px}
+.os-tabs button{padding:11px 8px;font-size:14px}
+.sub-tabs{display:flex;flex-wrap:wrap;margin-bottom:10px}
+.sub-tabs button{flex:1 1 auto}
+.fmt-switch{display:flex;width:100%;height:42px;align-items:stretch}
+.fmt-switch button{flex:1}
+.opts{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+/* compact in-place dropdowns */
+.dd{position:relative}
+.dd-btn{width:100%;height:42px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;background:#000;color:var(--tx);padding:0 38px 0 12px;text-align:left;position:relative;transition:.2s}
+.dd-btn .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.dd-btn::after{content:"";position:absolute;right:12px;top:50%;width:16px;height:16px;margin-top:-8px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a097" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') no-repeat center}
+.dd-panel{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);max-height:min(230px,50vh);overflow:auto;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:9px;padding:4px;box-shadow:0 12px 32px rgba(0,0,0,.9)}
+.dd-group{padding:7px 8px 3px;font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.dd-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1.35;min-width:0}
+.dd-item .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.dd-item:hover{background:#171717}.dd-item.sel{background:#1f1f22}
+.dd-item .flag,.dd-btn .flag{width:20px;height:14px}
+.dd-item .gico{width:20px;height:16px}
+.flag{width:22px;height:15px;border-radius:2px;flex:none;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.gico{width:22px;height:18px;flex:none;color:var(--ac)}
+.out-wrap{display:grid;grid-template-columns:1fr 160px;gap:16px}
+pre{margin:0;padding:16px 18px;border-radius:10px;background:#000;border:1px solid var(--line);color:var(--ac2);font:500 12.5px/1.65 ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;min-height:220px;max-height:420px;overflow:auto}
+.btn-stack{display:flex;flex-direction:column;gap:14px}
+.btn-stack .btn{flex:1;min-height:56px;flex-direction:column;gap:4px;line-height:1.3;white-space:normal;text-align:center}
+.btn-stack .ico{width:22px;height:22px}
+.trace{font-size:12px;color:var(--mut);padding:0 4px}
+.trace summary{display:inline-block;cursor:pointer;list-style:none;text-decoration:underline dotted;text-underline-offset:3px}
+.trace summary::-webkit-details-marker{display:none}
+.trace summary:hover{color:var(--tx)}
+.trace p{margin:6px 0 0}
+.trace code{color:var(--ac2);word-break:break-all}
+.notes{color:var(--mut);font-size:13px}
+.notes p{margin:4px 0}
+.notes code{color:var(--ac2);word-break:break-all}
+.trace-card{margin-top:14px}
+.trace-url{margin-top:12px!important}
+.notes a{text-decoration:underline dotted;text-underline-offset:3px}
+.notes a:hover code{color:#fff}
+.btn.xs{padding:6px 10px;font-size:12px;gap:6px;border-radius:8px;min-height:32px}
+.btn.xs .ico{width:14px;height:14px}
+#manualLinks{display:flex;flex-wrap:wrap;gap:6px}
+/* footer: clients */
+footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
+.clients{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+.clients>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;font-weight:700;color:var(--ac2);user-select:none}
+.clients>summary::-webkit-details-marker{display:none}
+.clients>summary::after{content:"";width:16px;height:16px;flex:none;transition:transform .2s;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a097" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') no-repeat center}
+.clients[open]>summary::after{transform:rotate(180deg)}
+.clients>summary:hover{background:#0d0d0d}
+.cl-body{padding:16px 20px 18px;border-top:1px solid var(--line)}
+.cl-body .os-tabs{margin-bottom:12px}
+.cl-list{display:flex;flex-wrap:wrap;gap:8px}
+.cl-item{flex:1 1 220px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#0a0a0a}
+.cl-name{font-size:13.5px;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.cl-links{display:flex;gap:6px;flex-wrap:wrap}
+.cl-link{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:99px;border:1px solid #2c2c2c;background:#0d0d0d;color:var(--ac);font-size:11.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:.2s}
+.cl-link:hover{background:#171717;border-color:#4a4a50;color:#fff}
+.cl-link svg{width:13px;height:13px;flex:none}
+[hidden]{display:none!important}
+@media(max-width:850px){.out-wrap{grid-template-columns:1fr}.btn-stack{flex-direction:row}.btn-stack .btn{min-height:64px}}
+@media(max-width:620px){
+  .grid2{grid-template-columns:1fr}
+  .card{padding:14px}
+  main{width:calc(100% - 20px);gap:14px;margin:14px auto 28px}
+  footer{width:calc(100% - 20px);margin:-14px auto 28px}
+  .clients>summary{padding:12px 14px}
+  .cl-body{padding:2px 14px 14px}
+  .cl-item{flex-basis:100%}
+  .switch button{padding:9px 8px;font-size:12px}
+  .sub-tabs.switch{display:flex;width:100%}
+  .btn.lg{padding:12px 20px;min-height:46px;font-size:15px}
+  pre{font-size:11.5px;padding:12px;min-height:160px;max-height:320px}
+  .btn-stack .btn{min-height:54px}
+}
+@media(max-width:380px){
+  body{font-size:14px}
+  .api{font-size:10.5px;padding:4px 2px}
+  .os-tabs button{font-size:12px;padding:10px 4px;gap:5px}
+  .os-tabs .ico{width:15px;height:15px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><b>MASQUE</b> Config Generator</h1>
+</header>
+<main>
+
+  <section class="card">
+    <h2>Step 1 - Generate a WARP MASQUE key <small>a new account is requested from the API pool</small></h2>
+    <div class="row" style="justify-content:center">
+      <button class="btn sm ghost" id="clearBtn" type="button" title="Clear" aria-label="Clear"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
+      <button class="btn primary lg" id="genBtn" type="button"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M16 7l3 3M14 9l2 2"/></svg><span class="bt">Generate new key</span></button>
+      <button class="btn sm" id="importBtn" type="button" title="Import" aria-label="Import"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></button>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+    </div>
+    <div class="status" id="keyStatus">No key yet. Generate one or import a usque JSON file.</div>
+    <div class="apis" id="apiChips" aria-label="API pool"></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="field full"><label for="privKey">Private key (base64)</label><textarea id="privKey" spellcheck="false" placeholder="MHcCAQEE..."></textarea></div>
+      <div class="field full"><label for="pubKey">Endpoint public key</label><textarea id="pubKey" spellcheck="false" placeholder="Filled automatically from the API response"></textarea></div>
+      <div class="field"><label for="ipv4">Tunnel IPv4</label><input id="ipv4" class="mono" spellcheck="false" placeholder="172.16.0.2"></div>
+      <div class="field"><label for="ipv6">Tunnel IPv6</label><input id="ipv6" class="mono" spellcheck="false" placeholder="2606:4700:110:..."></div>
+    </div>
+    <details style="margin-top:14px">
+      <summary class="lbl" style="cursor:pointer">Manual option (if the button gets rate limited)</summary>
+      <p class="hint">Open an API link in a new tab, copy the whole JSON it shows, and paste it here. The fields fill in automatically.</p>
+      <div id="manualLinks" style="margin:8px 0"></div>
+      <textarea id="pasteBox" spellcheck="false" placeholder='Paste the JSON here: {"private_key": ..., "endpoint_pub_key": ..., "ipv4": ...}'></textarea>
+    </details>
+    <p class="hint">Each press of the button uses the next API in the pool. If one fails (for example rate limit 1015), the next one is tried automatically. Wait a few minutes between many requests.</p>
+  </section>
+
+  <section class="card">
+    <h2>Step 2 - Settings</h2>
+    <div class="lbl" style="margin-bottom:8px">Client</div>
+    <div class="switch os-tabs" id="osTabs" role="tablist"></div>
+    <div class="switch sub-tabs" id="clientSub" role="tablist"></div>
+    <p class="hint" id="clientHint" style="margin:0 0 14px"></p>
+    <div class="grid2">
+      <div class="field"><label for="mode">Transport</label>
+        <select id="mode">
+          <option value="h2" selected>[ H2 ] TCP + TLS1.2 (default)</option>
+          <option value="h3">[ H3 ] QUIC + TLS1.3</option>
+        </select>
+        <span class="hint">H2 works over TCP. H3 needs UDP to be allowed.</span>
+      </div>
+      <div class="field"><label for="count">Number of configs</label>
+        <select id="count">
+          <option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+          <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+        </select>
+        <span class="hint">Max 10. For combined endpoints, half are IPv4 and half IPv6 (when both exist).</span>
+      </div>
+      <div class="field" id="regionField"><label for="region">Routing rules</label>
+        <select id="region"><option value="ir" selected>Iran (default)</option><option value="cn">China</option></select>
+        <span class="hint">Applies to Clash and v2rayNG / Happ / Streisand. Local sites go direct.</span>
+      </div>
+      <div class="field full"><label for="endpoint">Endpoint</label><select id="endpoint"></select></div>
+      <div class="field"><label for="port">Port</label><select id="port"></select></div>
+      <div class="field"><label for="sni">SNI masking</label><select id="sni"></select></div>
+      <div class="field"><label for="dns">DNS</label><select id="dns"></select></div>
+      <div class="field"><label for="nodeName">Name (Shadowrocket)</label><input id="nodeName" value="WARP-MASQUE" spellcheck="false"></div>
+      <div class="field"><span class="lbl">Include tunnel IPv6 address</span>
+        <div class="toggle-row"><button class="toggle on" id="v6Toggle" type="button" role="switch" aria-checked="true"><span></span></button><span class="hint">Turn off for an IPv4-only tunnel address</span></div>
+      </div>
+      <div class="field"><span class="lbl">Fragment masking</span>
+        <div class="toggle-row"><button class="toggle" id="fragToggle" type="button" role="switch" aria-checked="false"><span></span></button><span class="hint">Turn off if requests fail or a "Mask" error appears</span></div>
+      </div>
+    </div>
+    <div class="opts" id="clashOpts" hidden>
+      <div class="lbl" style="margin-bottom:8px">Clash options</div>
+      <div class="grid2">
+        <div class="field"><label for="geoSource">Rules source (Geo)</label><select id="geoSource"></select></div>
+        <div class="field"><span class="lbl">H3-L4 mode (low latency)</span>
+          <div class="toggle-row"><button class="toggle" id="l4Toggle" type="button" role="switch" aria-checked="false"><span></span></button><span class="hint">Forces fixed SNI, DoH DNS and UDP off. Uses H3.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="opts" id="mahsaOpts" hidden>
+      <div class="lbl" style="margin-bottom:8px">MahsaNG options</div>
+      <div class="grid2">
+        <div class="field"><span class="lbl">Output</span>
+          <select id="mahsaFmt" hidden><option value="link" selected>masque:// links (one per line)</option><option value="json">JSON configs</option></select>
+          <div class="switch fmt-switch" id="fmtSwitch" role="tablist"><button type="button" data-v="link" class="active">masque:// links</button><button type="button" data-v="json">JSON</button></div></div>
+        <div class="field"><label for="noise">Noise (wnoise)</label>
+          <select id="noise"><option value="" selected>none</option><option value="quic">quic</option><option value="quicv1">quicv1</option><option value="quicinit">quicinit</option><option value="random">random</option></select>
+          <span class="hint">When enabled: count 15, delay 1-2, payload size 5-10.</span></div>
+        <div class="field"><label for="mtu">MTU</label><input id="mtu" class="mono" inputmode="numeric" value="1280"></div>
+        <div class="field"><label for="keep">Keep alive</label><input id="keep" class="mono" inputmode="numeric" value="5"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Step 3 - Output <span class="pill warn" id="outPill" style="margin-left:8px;font-size:11px">Waiting for key</span></h2>
+    <p class="hint" id="outHint" style="margin:0 0 12px">Generate or import a key to see the config.</p>
+    <div class="out-wrap">
+      <pre id="preview"># Live preview ...</pre>
+      <div class="btn-stack">
+        <button class="btn primary" id="copyBtn" type="button" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span class="bt">Copy</span></button>
+        <button class="btn" id="dlBtn" type="button" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg><span class="bt">Download</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card notes trace-card">
+    <h2>Trace</h2>
+    <p>Use the latest Xray core and client.</p>
+    <p class="trace-url">Clash test URL: <a id="traceLink" href="https://cloudflare.com/cdn-cgi/trace" target="_blank" rel="noopener noreferrer"><code>https://cloudflare.com/cdn-cgi/trace</code></a></p>
+  </section>
+</main>
+
+<footer>
+  <details class="clients" id="clientsBox">
+    <summary>Clients</summary>
+    <div class="cl-body" id="clientsList"></div>
+  </details>
+</footer>
+
+<script>
+window.MIHOMO_MASQUE_TEMPLATE = `{
+  "__NOTE_KEY__": __NOTES__,
+  "log": { "loglevel": "warning" },
+  "outbounds": [
+__NODES__
+  ]
+}`;
+
+window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_PREFIX = `[
+`;
+window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_SUFFIX = `
+]`;
+
+window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ITEM = `  {
+    "__NOTE_KEY__": __NOTES__,
+    "log": { "loglevel": "warning" },
+    "dns": {
+      "hosts": {
+        "one.one.one.one": ["1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001"],
+        "1dot1dot1dot1.cloudflare-dns.com": ["1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001"],
+        "dns.google": ["8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844"],
+        "dns.alidns.com": ["223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1"],
+        "cloudflare-dns.com": ["104.16.249.249", "104.16.248.249", "2606:4700::6810:f8f9", "2606:4700::6810:f9f9"],
+        "dns.cloudflare.com": ["162.159.61.8", "172.64.41.8", "2a06:98c1:52::8", "2803:f800:53::8"],
+        "dot.pub": ["1.12.12.12", "120.53.53.53"],
+        "doh.pub": ["1.12.12.12", "120.53.53.53"],
+        "dns.quad9.net": ["9.9.9.9", "149.112.112.112", "2620:fe::fe", "2620:fe::9"],
+        "dns.yandex.net": ["77.88.8.8", "77.88.8.1", "2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff"],
+        "dns.sb": ["45.11.45.11", "185.222.222.222", "2a09::", "2a11::"],
+        "dns.umbrella.com": ["208.67.220.220", "208.67.222.222", "2620:119:35::35", "2620:119:53::53"],
+        "dns.sse.cisco.com": ["208.67.220.220", "208.67.222.222", "2620:119:35::35", "2620:119:53::53"],
+        "engage.cloudflareclient.com": ["162.159.192.1", "2606:4700:d0::a29f:c001"]
+      },
+      "servers": [
+        {
+          "address": "223.5.5.5",
+          "domains": ["full:cloudflare-dns.com", "full:dns.google"],
+          "skipFallback": true
+        },
+        {
+          "address": "https://cloudflare-dns.com/dns-query",
+          "domains": ["domain:googleapis.cn", "domain:gstatic.com"],
+          "skipFallback": true
+        },
+        {
+          "address": "https://dns.google/dns-query",
+          "domains": ["domain:googleapis.cn", "domain:gstatic.com"],
+          "skipFallback": true
+        },
+        {
+          "address": "8.8.8.8",
+          "domains": ["domain:googleapis.cn", "domain:gstatic.com"],
+          "skipFallback": true
+        },
+        {
+          "address": "223.5.5.5",
+          "domains": ["domain:alidns.com", "domain:doh.pub", "domain:dot.pub", "domain:360.cn", "domain:onedns.net"],
+          "skipFallback": true,
+          "tag": "direct-dns-1"
+        },
+        {
+          "address": "223.5.5.5",
+          "domains": ["geosite:private", "geosite:cn"],
+          "skipFallback": true,
+          "tag": "direct-dns-2"
+        },
+        "https://cloudflare-dns.com/dns-query",
+        "https://dns.google/dns-query",
+        "8.8.8.8"
+      ],
+      "tag": "dns-module"
+    },
+    "inbounds": [
+      {
+        "tag": "socks",
+        "port": 10808,
+        "listen": "0.0.0.0",
+        "protocol": "mixed",
+        "sniffing": {
+          "enabled": false,
+          "destOverride": ["http", "tls"],
+          "routeOnly": false
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": true,
+          "allowTransparent": false
+        }
+      }
+    ],
+    "outbounds": [
+__MASQUE_OUTBOUND__
+      ,
+      {
+        "tag": "direct",
+        "protocol": "freedom"
+      },
+      {
+        "tag": "block",
+        "protocol": "blackhole"
+      }
+    ],
+    "routing": {
+      "domainStrategy": "AsIs",
+      "rules": [
+        {
+          "type": "field",
+          "outboundTag": "proxy",
+          "domain": ["domain:googleapis.cn", "domain:gstatic.com"]
+        },
+        {
+          "type": "field",
+          "port": "443",
+          "network": "udp",
+          "outboundTag": "block"
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "ip": ["geoip:private"]
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "domain": ["geosite:private"]
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "ip": [
+            "223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1",
+            "119.29.29.29", "1.12.12.12", "120.53.53.53", "2402:4e00::", "2402:4e00:1::",
+            "180.76.76.76", "2400:da00::6666", "114.114.114.114", "114.114.115.115",
+            "114.114.114.119", "114.114.115.119", "114.114.114.110", "114.114.115.110",
+            "180.184.1.1", "180.184.2.2", "101.226.4.6", "218.30.118.6", "123.125.81.6",
+            "140.207.198.6", "1.2.4.8", "210.2.4.8", "52.80.66.66", "117.50.22.22",
+            "2400:7fc0:849e:200::4", "2404:c2c0:85d8:901::4", "117.50.10.10", "52.80.52.52",
+            "2400:7fc0:849e:200::8", "2404:c2c0:85d8:901::8", "117.50.60.30", "52.80.60.30"
+          ]
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "domain": ["domain:alidns.com", "domain:doh.pub", "domain:dot.pub", "domain:360.cn", "domain:onedns.net"]
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "ip": ["geoip:cn"]
+        },
+        {
+          "type": "field",
+          "outboundTag": "direct",
+          "domain": ["geosite:cn"]
+        },
+        {
+          "type": "field",
+          "inboundTag": ["direct-dns-1", "direct-dns-2"],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "inboundTag": ["dns-module"],
+          "outboundTag": "proxy"
+        }
+      ]
+    },
+    "metrics": {
+      "listen": "127.0.0.1:10812"
+    },
+    "policy": {
+      "system": {
+        "statsOutboundUplink": true,
+        "statsOutboundDownlink": true
+      }
+    },
+    "stats": {}
+  }`;
+
+</script>
+<script>
+window.CLASH_TEMPLATE = `__HEADER__
+
+# Basic settings
+mode: rule
+allow-lan: true
+mixed-port: 7890
+bind-address: '*'
+ipv6: __GLOBAL_IPV6__
+unified-delay: true
+tcp-concurrent: true
+log-level: info
+global-ua: clash.meta
+
+# External dashboard
+external-controller: 127.0.0.1:9090
+external-ui: ui
+external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
+
+# Geo settings
+geodata-mode: true
+geox-url:
+__GEOX_URL_BLOCK__
+geo-auto-update: true
+geo-update-interval: 24
+
+# Profile persistence
+profile:
+  store-selected: true
+  store-fake-ip: true
+  
+# Traffic sniffing
+sniffer:
+  enable: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  skip-domain:
+    - "Mijia Cloud"
+    - "+.push.apple.com"
+
+# TUN mode settings
+tun:
+  enable: false
+  stack: mixed
+  dns-hijack:
+    - "any:53"
+    - "tcp://any:53"
+  auto-route: true
+  auto-redirect: true
+  auto-detect-interface: true
+
+# DNS
+dns:
+  enable: true
+  ipv6: __DNS_IPV6__
+  listen: 0.0.0.0:1053
+  __DNS_ENHANCED_MODE__
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - geosite:private
+    - geosite:cn
+    - rule-set:fakeip-filter
+    - "*.lan"
+    - "*.local"
+    - "*.arpa"
+    - localhost.ptlogin2.qq.com
+    - "*.msftncsi.com"
+    - www.msftconnecttest.com
+    - "*.ntp.org"
+    - time.windows.com
+    - time.apple.com
+    - ntp.aliyun.com
+    - cn.pool.ntp.org
+    - +.market.xiaomi.com
+    - +.miwifi.com
+    - +.push.apple.com
+    - +.pub.3gppnetwork.org
+  use-hosts: true
+  respect-rules: true
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  nameserver-policy:
+    "geosite:cn":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "geosite:geolocation-!cn":
+      - https://cloudflare-dns.com/dns-query#proxy=Proxy-Select
+      - https://dns.google/dns-query#proxy=Proxy-Select
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+
+# External resources
+proxy-providers:
+  VPNGATE-CHAIN:
+    type: http
+    url: "https://raw.githubusercontent.com/wanwushequ/VG2C/main/vpngate.yaml"
+    path: "./providers/vpngate-chain.yaml"
+    proxy: "Endpoint-Auto"
+    interval: 1800
+    size-limit: 1048576
+    health-check: {enable: true, url: __LATENCY_TEST_URL__, interval: 300, timeout: 6000, lazy: true}
+    override:
+      additional-prefix: "Front-Endpoint → "
+      dialer-proxy: "Front-Endpoint"
+  VPNGATE-CHAIN-AUTO:
+    type: http
+    url: "https://raw.githubusercontent.com/wanwushequ/VG2C/main/vpngate.yaml"
+    path: "./providers/vpngate-chain-auto.yaml"
+    proxy: "Endpoint-Auto"
+    interval: 1800
+    size-limit: 1048576
+    health-check: {enable: true, url: __LATENCY_TEST_URL__, interval: 300, timeout: 6000, lazy: true}
+    override:
+      additional-prefix: "Auto UN | "
+      dialer-proxy: "Front-Endpoint"	  
+  VPNGATE-CHAIN-JP:
+    type: http
+    url: "https://raw.githubusercontent.com/wanwushequ/VG2C/main/vpngate-jp.yaml"
+    path: "./providers/vpngate-chain-jp.yaml"
+    proxy: "Endpoint-Auto"
+    interval: 1800
+    size-limit: 1048576
+    health-check: {enable: true, url: __LATENCY_TEST_URL__, interval: 300, timeout: 6000, lazy: true}
+    override:
+      additional-prefix: "Auto JP | "
+      dialer-proxy: "Front-Endpoint"
+  VPNGATE-CHAIN-KR:
+    type: http
+    url: "https://raw.githubusercontent.com/wanwushequ/VG2C/main/vpngate-kr.yaml"
+    path: "./providers/vpngate-chain-kr.yaml"
+    proxy: "Endpoint-Auto"
+    interval: 1800
+    size-limit: 1048576
+    health-check: {enable: true, url: __LATENCY_TEST_URL__, interval: 300, timeout: 6000, lazy: true}
+    override:
+      additional-prefix: "Auto KR | "
+      dialer-proxy: "Front-Endpoint"
+
+# Proxy groups
+proxy-groups:
+  - name: Proxy-Select
+    type: select
+    proxies: [Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Rocket.png"
+  - name: Endpoint-Manual
+    type: select
+    proxies: __MASQUE_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Static.png"	  
+  - name: Endpoint-Auto
+    type: url-test
+    url: __LATENCY_TEST_URL__
+    interval: __LATENCY_INTERVAL__
+    tolerance: __LATENCY_TOLERANCE__
+    proxies: __MASQUE_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Auto.png"	
+  - name: Endpoint-Failover
+    type: fallback
+    url: __LATENCY_TEST_URL__
+    interval: __LATENCY_INTERVAL__
+    proxies: __MASQUE_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png"
+  - name: Front-Endpoint
+    type: select
+    proxies: __MASQUE_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Star.png"  
+  - name: Chain-Proxy
+    type: select
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Back.png"
+    proxies:
+      - "Front-Endpoint → 🇺🇳 Any"
+      - "Front-Endpoint → 🇰🇷 South Korea"
+      - "Front-Endpoint → 🇯🇵 Japan"
+    use:
+      - "VPNGATE-CHAIN"
+  - name: "Front-Endpoint → 🇺🇳 Any"
+    type: url-test
+    hidden: true
+    url: __LATENCY_TEST_URL__
+    interval: __LATENCY_INTERVAL__
+    tolerance: __LATENCY_TOLERANCE__
+    lazy: true
+    max-failed-times: 2
+    use:
+      - "VPNGATE-CHAIN-AUTO"
+  - name: "Front-Endpoint → 🇯🇵 Japan"
+    type: url-test
+    hidden: true
+    url: __LATENCY_TEST_URL__
+    interval: __LATENCY_INTERVAL__
+    tolerance: __LATENCY_TOLERANCE__
+    lazy: true
+    max-failed-times: 2
+    use:
+      - "VPNGATE-CHAIN-JP"
+  - name: "Front-Endpoint → 🇰🇷 South Korea"
+    type: url-test
+    hidden: true
+    url: __LATENCY_TEST_URL__
+    interval: __LATENCY_INTERVAL__
+    tolerance: __LATENCY_TOLERANCE__
+    lazy: true
+    max-failed-times: 2
+    use:
+      - "VPNGATE-CHAIN-KR"
+  - name: My-Subscription
+    type: select
+    proxies: __EXIT_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Domestic.png"	
+  - name: My-Chain
+    type: select
+    proxies: __CHAIN_PROXIES__
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Round_Robin.png"
+
+  - name: AI
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Foreign-Streaming
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/TikTok.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Domestic-Streaming
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/bilibili.png
+    proxies: [Domestic-Direct, Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Social-Media
+    type: select
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Twitter.png"
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Telegram
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Telegram.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Google
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Microsoft
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png
+    proxies: [Domestic-Direct, Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Apple
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png
+    proxies: [Domestic-Direct, Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Acceleration
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cloudflare.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Gaming
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Game.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Foreign-Sites
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, DIRECT]
+
+  - name: Domestic-Direct
+    type: select
+    proxies: [DIRECT]
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Direct.png"
+  - name: Global-Block
+    type: select
+    proxies: [REJECT, Proxy-Select, DIRECT]
+    icon: "https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Reject.png"
+  - name: Final-Match
+    type: select
+    icon: https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Final.png
+    proxies: [Proxy-Select, Endpoint-Manual, Endpoint-Auto, Endpoint-Failover, Chain-Proxy, My-Subscription, My-Chain, Domestic-Direct, DIRECT]
+
+# MRS
+rule-anchor:
+  ip: &ip {type: http, interval: 86400, behavior: ipcidr, format: mrs}
+  domain: &domain {type: http, interval: 86400, behavior: domain, format: mrs}
+
+rule-providers:
+  cn_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs"}
+  category-media-cn: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-media-cn.mrs"}
+  category-ai-!cn: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs"}
+  category-social-media-!cn: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-social-media-!cn.mrs"}
+  twitter_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/twitter.mrs"}
+  bilibili_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/bilibili.mrs"}
+  youtube_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/youtube.mrs"}
+  netflix_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/netflix.mrs"}
+  disney_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/disney.mrs"}
+  spotify_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/spotify.mrs"}
+  tiktok_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/tiktok.mrs"}
+  primevideo_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/primevideo.mrs"}
+  hbo_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/hbo.mrs"}
+  emby_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-emby.mrs"}
+  telegram_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/telegram.mrs"}
+  google_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/google.mrs"}
+  github_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs"}
+  microsoft_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft.mrs"}
+  apple_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple.mrs"}
+  cloudflare_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cloudflare.mrs"}
+  steam_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs"}
+  epicgames_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/epicgames.mrs"}
+  sony_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/sony.mrs"}
+  xbox_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/xbox.mrs"}
+  geolocation-!cn: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-!cn.mrs"}
+  category-ads-all: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ads-all.mrs"}
+  gfw_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/gfw.mrs"}
+  private_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/private.mrs"}
+  private_domain: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs"}
+  netflix_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/netflix.mrs"}
+  telegram_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs"}
+  cloudflare_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cloudflare.mrs"}
+  cn_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/cn.mrs"}
+  ad_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/ad.mrs"}
+  google_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/google.mrs"}
+  twitter_ip: {<<: *ip, url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/twitter.mrs"}
+  fakeip-filter: {<<: *domain, url: "https://cdn.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-ruleset/fakeip-filter.mrs"}
+  # ACL4SSR - AI
+  ai_domain: {type: http, interval: 86400, behavior: domain, format: text, url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/AI.list"}
+
+# Rules
+rules:
+  # ===== Block =====
+  - RULE-SET,category-ads-all,Global-Block
+  - RULE-SET,ad_ip,Global-Block,no-resolve
+
+  # ===== Private addresses (direct) =====
+  - RULE-SET,private_domain,Domestic-Direct
+  - RULE-SET,private_ip,Domestic-Direct,no-resolve
+  - GEOIP,private,Domestic-Direct,no-resolve
+
+  # ===== AI =====
+  # AI - Gemini (mobile)
+  - DOMAIN,robinfrontend-pa.googleapis.com,AI
+  - DOMAIN,signaler-pa.googleapis.com,AI
+  - DOMAIN,jnn-pa.googleapis.com,AI
+  - DOMAIN,waa-pa.clients6.google.com,AI
+  - DOMAIN,ogads-pa.clients6.google.com,AI
+  # AI - ACL4SSR general
+  - RULE-SET,ai_domain,AI
+  # AI - MRS
+  - RULE-SET,category-ai-!cn,AI
+
+  # ===== Domestic streaming =====
+  - RULE-SET,bilibili_domain,Domestic-Streaming
+  - RULE-SET,category-media-cn,Domestic-Streaming
+
+  # ===== International streaming =====
+  - RULE-SET,youtube_domain,Foreign-Streaming
+  - RULE-SET,netflix_domain,Foreign-Streaming
+  - RULE-SET,netflix_ip,Foreign-Streaming,no-resolve
+  - RULE-SET,disney_domain,Foreign-Streaming
+  - RULE-SET,primevideo_domain,Foreign-Streaming
+  - RULE-SET,hbo_domain,Foreign-Streaming
+  - RULE-SET,spotify_domain,Foreign-Streaming
+  - RULE-SET,tiktok_domain,Foreign-Streaming
+  - RULE-SET,emby_domain,Foreign-Streaming
+
+  # ===== Social media =====
+  - RULE-SET,twitter_domain,Social-Media
+  - RULE-SET,twitter_ip,Social-Media,no-resolve
+  - RULE-SET,category-social-media-!cn,Social-Media
+
+  # ===== Telegram =====
+  - RULE-SET,telegram_domain,Telegram
+  - RULE-SET,telegram_ip,Telegram,no-resolve
+
+  # ===== GitHub =====
+  - DOMAIN-SUFFIX,github.com,Proxy-Select
+  - DOMAIN-SUFFIX,githubusercontent.com,Proxy-Select
+  - DOMAIN-SUFFIX,githubassets.com,Proxy-Select
+  - DOMAIN-SUFFIX,github.io,Proxy-Select
+  - DOMAIN-SUFFIX,github.dev,Proxy-Select
+  - DOMAIN-SUFFIX,githubcopilot.com,AI
+  - RULE-SET,github_domain,Proxy-Select
+
+  # ===== Google / Microsoft / Apple =====
+  - RULE-SET,google_domain,Google
+  - RULE-SET,google_ip,Google,no-resolve
+  - RULE-SET,microsoft_domain,Microsoft
+  - RULE-SET,apple_domain,Apple
+
+  # ===== Cloudflare =====
+  - RULE-SET,cloudflare_domain,Acceleration
+  - RULE-SET,cloudflare_ip,Acceleration,no-resolve
+
+  # ===== Gaming platforms =====
+  - DOMAIN-SUFFIX,steamserver.net,Domestic-Direct
+  - DOMAIN-SUFFIX,cm.steampowered.com,Domestic-Direct
+  - RULE-SET,steam_domain,Gaming
+  - RULE-SET,epicgames_domain,Gaming
+  - RULE-SET,sony_domain,Gaming
+  - RULE-SET,xbox_domain,Gaming
+
+  # ===== Domestic (direct) =====
+  - RULE-SET,cn_domain,Domestic-Direct
+  - RULE-SET,cn_ip,Domestic-Direct,no-resolve
+  - GEOSITE,cn,Domestic-Direct
+  - GEOIP,CN,Domestic-Direct,no-resolve  
+
+  # ===== GFW list =====
+  - RULE-SET,gfw_domain,Proxy-Select
+  - GEOSITE,gfw,Proxy-Select
+
+  # ===== International fallback =====
+  - RULE-SET,geolocation-!cn,Foreign-Sites
+  - GEOSITE,geolocation-!cn,Foreign-Sites
+
+  # ===== Final fallback =====
+  - MATCH,Final-Match
+
+proxies:
+__NODES__
+`;
+</script>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  /* ======================= DATA ======================= */
+  const APIS = [
+    "https://masque.configwireguard.workers.dev/",
+    "https://masque.configwireguard2.workers.dev/",
+    "https://masque.configwireguard3.workers.dev/",
+    "https://masque.configwireguard4.workers.dev/"
+  ];
+  const PORTS = ["8095", "443", "8443", "4443", "1701", "4500", "500"];
+  const SUFFIX = "MASQUE Nav";
+
+  const fx = (list, prefix, port = "443") => list.map((server) => ({ server, port, prefix }));
+  const OFF4 = [["162.159.198.2", "Official"], ["162.159.199.2", "Official"]];
+  const OFF6 = [["2606:4700:103::2", "Official IPv6"], ["2606:4700:104::2", "Official IPv6"]];
+  const US = ["us.v6.free.bestcf.eu.cc", "2602:fc59:b0:64::a29f:c601", "2602:fc59:b0:64::a29f:c602", "2602:fc59:b0:64::a29f:c701", "2602:fc59:b0:64::a29f:c702", "2a14:7583:f764:64::a29f:c601", "2a14:7583:f764:64::a29f:c602", "2a14:7583:f764:64::a29f:c701", "2a14:7583:f764:64::a29f:c702"];
+  const DE = ["de.v6.free.bestcf.eu.cc", "2001:67c:2960:6464::a29f:c601", "2001:67c:2960:6464::a29f:c602", "2001:67c:2960:6464::a29f:c701", "2001:67c:2960:6464::a29f:c702"];
+  const FI = ["fi.v6.free.bestcf.eu.cc", "2001:67c:2b0:db32::a29f:c601", "2001:67c:2b0:db32::a29f:c602", "2001:67c:2b0:db32::a29f:c701", "2001:67c:2b0:db32::a29f:c702"];
+  const BK4 = ["masque1.bestcf.eu.cc", "masque2.bestcf.eu.cc"];
+  const BK6 = ["masque3.bestcf.eu.cc", "masque4.bestcf.eu.cc"];
+
+  // "ranged": expanded over the selected port(s); "fixed": always use their own port
+  const COMBINED = {
+    all: {
+      label: "Combined | IPv4 + IPv6 (default)",
+      ranged: [...OFF4, ...OFF6],
+      fixed: [...fx(US, "US IPv6"), ...fx(DE, "Germany IPv6"), ...fx(FI, "Finland IPv6"), ...fx(BK4, "Backup"), ...fx(BK6, "Backup IPv6")]
+    },
+    all6: {
+      label: "Combined | IPv6 only",
+      ranged: [...OFF6],
+      fixed: [...fx(US, "US IPv6"), ...fx(DE, "Germany IPv6"), ...fx(FI, "Finland IPv6"), ...fx(BK6, "Backup IPv6")]
+    },
+    all3: { label: "Combined | IPv4 (official endpoints only)", ranged: [...OFF4], fixed: [] },
+    all2: { label: "Combined | IPv4 (incl. third-party endpoints)", ranged: [...OFF4], fixed: [...fx(BK4, "Backup")] },
+    zerotrust: {
+      label: "Combined | ZeroTrust accounts only",
+      ranged: [["162.159.197.2", "Official"]],
+      fixed: [
+        { server: "43.129.179.241", port: "8443", prefix: "Hong Kong" },
+        { server: "152.175.4.12", port: "65535", prefix: "Hong Kong" },
+        { server: "151.242.164.2", port: "65534", prefix: "Japan" },
+        { server: "158.101.89.186", port: "443", prefix: "Japan" },
+        { server: "45.87.102.254", port: "65535", prefix: "Hong Kong" },
+        ...fx(["us.v6.zt.bestcf.eu.cc", "2602:fc59:b0:64::a29f:c501", "2602:fc59:b0:64::a29f:c502"], "US IPv6"),
+        ...fx(["de.v6.zt.bestcf.eu.cc", "2001:67c:2960:6464::a29f:c501", "2001:67c:2960:6464::a29f:c502"], "Germany IPv6"),
+        ...fx(["fi.v6.zt.bestcf.eu.cc", "2001:67c:2b0:db32::a29f:c501", "2001:67c:2b0:db32::a29f:c502"], "Finland IPv6"),
+        ...["8095", "443", "8443", "4443"].map((port) => ({ server: "2606:4700:102::2", port, prefix: "Official IPv6" }))
+      ]
+    }
+  };
+
+  // [value, label, prefix]
+  const SINGLES = [
+    ["162.159.198.2", "Official | 162.159.198.2 (primary IPv4)", "Official"],
+    ["162.159.199.2", "Official | 162.159.199.2 (backup IPv4)", "Official"],
+    ["2606:4700:103::2", "Official | 2606:4700:103::2 (primary IPv6)", "Official IPv6"],
+    ["2606:4700:104::2", "Official | 2606:4700:104::2 (backup IPv6)", "Official IPv6"],
+    ["masque1.bestcf.eu.cc", "Backup | masque1.bestcf.eu.cc (IPv4)", "Backup"],
+    ["masque2.bestcf.eu.cc", "Backup | masque2.bestcf.eu.cc (IPv4)", "Backup"],
+    ["masque3.bestcf.eu.cc", "Backup | masque3.bestcf.eu.cc (IPv6)", "Backup IPv6"],
+    ["masque4.bestcf.eu.cc", "Backup | masque4.bestcf.eu.cc (IPv6)", "Backup IPv6"],
+    ...US.map((s) => [s, "US | " + s, "US IPv6"]),
+    ...DE.map((s) => [s, "Germany | " + s, "Germany IPv6"]),
+    ...FI.map((s) => [s, "Finland | " + s, "Finland IPv6"])
+  ];
+
+  const SNIS = [
+    ["consumer-masque.cloudflareclient.com", "MASQUE default | consumer-masque.cloudflareclient.com (default)"],
+    ["www.microsoft.com", "Microsoft | www.microsoft.com"],
+    ["www.apple.com", "Apple | www.apple.com"], ["www.bing.com", "Bing | www.bing.com"],
+    ["www.oracle.com", "Oracle | www.oracle.com"], ["www.deepseek.com", "DeepSeek | www.deepseek.com"],
+    ["www.kimi.ai", "Moonshot (Kimi) | www.kimi.ai"], ["www.um.edu.mo", "University of Macau | www.um.edu.mo"],
+    ["www.hku.hk", "HKU | www.hku.hk"], ["www.ntu.edu.sg", "NTU Singapore | www.ntu.edu.sg"],
+    ["www.ox.ac.uk", "Oxford | www.ox.ac.uk"], ["www.harvard.edu", "Harvard | www.harvard.edu"],
+    ["www.mit.edu", "MIT | www.mit.edu"], ["www.stanford.edu", "Stanford | www.stanford.edu"],
+    ["cdn.jsdelivr.net", "CDN | cdn.jsdelivr.net"], ["www.visa.cn", "VISA China | www.visa.cn"],
+    ["visa.com", "VISA US | visa.com"], ["www.speedtest.net", "SpeedTest | www.speedtest.net"],
+    ["www.cloudflare.com", "Cloudflare website | www.cloudflare.com"],
+    ["speed.cloudflare.com", "Cloudflare speed test | speed.cloudflare.com"],
+    ["cdnjs.cloudflare.com", "Cloudflare CDN | cdnjs.cloudflare.com"],
+    ["cloudflare.dev", "Cloudflare developers | cloudflare.dev"],
+    ["research.cloudflare.com", "Cloudflare research | research.cloudflare.com"],
+    ["zt-masque.cloudflareclient.com", "ZeroTrust default | zt-masque.cloudflareclient.com"]
+  ];
+
+  const DNSES = [
+    ["1.1.1.1, 8.8.8.8", "Cloudflare + Google | 1.1.1.1, 8.8.8.8 (default)"],
+    ["1.1.1.1, 8.8.8.8, 2606:4700:4700::1111, 2001:4860:4860::8888", "Cloudflare + Google IPv4 + IPv6"],
+    ["1.1.1.1, 2606:4700:4700::1111", "Cloudflare IPv4 + IPv6"],
+    ["1.1.1.1", "Cloudflare | 1.1.1.1"], ["8.8.8.8", "Google | 8.8.8.8"], ["9.9.9.9", "Quad9 | 9.9.9.9"],
+    ["1.1.1.1, 9.9.9.9", "Cloudflare + Quad9 | 1.1.1.1, 9.9.9.9"],
+    ["1.1.1.1, 1.0.0.1", "Cloudflare primary + backup | 1.1.1.1, 1.0.0.1"],
+    ["1.1.1.1, 8.8.8.8, 9.9.9.9", "All three | 1.1.1.1, 8.8.8.8, 9.9.9.9"],
+    ["1.0.0.1", "Cloudflare (backup) | 1.0.0.1"], ["8.8.4.4", "Google (backup) | 8.8.4.4"],
+    ["149.112.112.112", "Quad9 (backup) | 149.112.112.112"],
+    ["2606:4700:4700::1111", "Cloudflare IPv6 | 2606:4700:4700::1111"],
+    ["2001:4860:4860::8888", "Google IPv6 | 2001:4860:4860::8888"]
+  ];
+
+  const SITE_URL = "https://تست.pages.dev/";   // <- put your real site address here
+  const TG_URL = "https://t.me/ConfigWireguard";
+  const NOTES = [
+    "Please keep the Xray core and your v2ray client up to date; some clients may be incompatible",
+    "Use MASQUE with official endpoints or official clients only; third-party resources may cause privacy leaks or losses",
+    "This config is completely free! Beware of scams, and share it with your friends!",
+    "For technical research only. Delete the config after 24 hours; any other use is prohibited!",
+    "Website - " + SITE_URL,
+    "Telegram - " + TG_URL
+  ];
+  const CLIENT_NAMES = { pc: "v2rayN | Throne | OneXray", phone: "v2rayNG | Happ", streisand: "Streisand" };
+  const withNotes = (t) => t.replace("__NOTE_KEY__", () => "_" + (CLIENT_NAMES[client] || "")).replace("__NOTES__", () => JSON.stringify(NOTES));
+
+  const GEO_SOURCES = [
+    ["metacubexIr", "MetaCubeX Geo full (Iran rules, default)", { geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat", geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat" }],
+    ["loyalsoldier", "Loyalsoldier Geo + MRS (default)", { geoip: "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", geosite: "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat" }],
+    ["metacubex", "MetaCubeX Geo Lite + MRS (mobile | official Mihomo)", { geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip-lite.dat", geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat" }],
+    ["dustinwin", "DustinWin Geo + MRS", { geoip: "https://cdn.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-geodata/geoip-lite.dat", geosite: "https://cdn.jsdelivr.net/gh/DustinWin/ruleset_geodata@mihomo-geodata/geosite.dat" }],
+    ["metacubexFull", "MetaCubeX Geo full set + MRS", { geoip: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat", geosite: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat", mmdb: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country-lite.mmdb", asn: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb" }],
+    ["loyalsoldierGithub", "Loyalsoldier Geo GitHub + MRS", { geoip: "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat", geosite: "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" }]
+  ];
+  const PLAIN_DNS_RE = /^[\d.:a-f, ]+$/i;
+
+  const IR_GEO_OK = ["metacubexIr", "metacubexFull"];
+  // Convert the China-oriented Clash template to Iran rules
+  function toIranClash(t) {
+    const drop = ["localhost.ptlogin2.qq.com", "ntp.aliyun.com", "cn.pool.ntp.org", "+.market.xiaomi.com", "+.miwifi.com", '"Mijia Cloud"', "bilibili_domain", "steamserver.net", "cm.steampowered.com"];
+    t = t.split("\n").filter((l) => !drop.some((d) => l.includes(d))).join("\n");
+    t = t.replace(/  default-nameserver:[\s\S]*?\n  proxy-server-nameserver:\n    - 223\.5\.5\.5\n    - 119\.29\.29\.29/,
+`  default-nameserver:
+    - 1.1.1.1
+    - 8.8.8.8
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  nameserver-policy:
+    "geosite:category-ir":
+      - system
+    "geosite:geolocation-!cn":
+      - https://cloudflare-dns.com/dns-query#proxy=Proxy-Select
+      - https://dns.google/dns-query#proxy=Proxy-Select
+  proxy-server-nameserver:
+    - system
+    - 1.1.1.1`);
+    [["    - geosite:cn\n", "    - geosite:category-ir\n"], ["geo/geosite/cn.mrs", "geo/geosite/category-ir.mrs"], ["geo-lite/geoip/cn.mrs", "geo/geoip/ir.mrs"],
+     ["cn_domain", "ir_domain"], ["cn_ip", "ir_ip"], ["category-media-cn", "category-media-ir"], ["GEOSITE,cn,", "GEOSITE,category-ir,"], ["GEOIP,CN,", "GEOIP,IR,"], ["bilibili.png", "Domestic.png"]]
+      .forEach(([a, b]) => { t = t.split(a).join(b); });
+    return t;
+  }
+  // Convert a mobile Xray config (DNS + routing) to Iran rules
+  function toIranXray(o) {
+    if (o.dns && o.dns.hosts) ["dns.alidns.com", "dot.pub", "doh.pub"].forEach((h) => { delete o.dns.hosts[h]; });
+    o.dns.servers = [
+      { address: "localhost", domains: ["geosite:category-ir", "domain:ir"], skipFallback: true, tag: "direct-dns" },
+      "https://cloudflare-dns.com/dns-query", "https://dns.google/dns-query", "8.8.8.8"
+    ];
+    o.routing.rules = [
+      { type: "field", outboundTag: "proxy", domain: ["domain:googleapis.cn", "domain:gstatic.com"] },
+      { type: "field", port: "443", network: "udp", outboundTag: "block" },
+      { type: "field", outboundTag: "direct", ip: ["geoip:private"] },
+      { type: "field", outboundTag: "direct", domain: ["geosite:private"] },
+      { type: "field", outboundTag: "direct", domain: ["domain:ir", "geosite:category-ir"] },
+      { type: "field", outboundTag: "direct", ip: ["geoip:ir"] },
+      { type: "field", inboundTag: ["direct-dns"], outboundTag: "direct" },
+      { type: "field", inboundTag: ["dns-module"], outboundTag: "proxy" }
+    ];
+    return o;
+  }
+
+  const CLIENT_HINTS = {
+    pc: "One JSON config with all selected nodes (combined) or one node (single). Import into v2rayN / Throne / OneXray.",
+    phone: "A JSON list where every node is a full config with DNS and routing. Import into v2rayNG / Happ.",
+    mahsa: "MahsaNG format: masque:// links or JSON configs, one per node. Choose below.",
+    streisand: "A JSON list where every node is a full config with DNS and routing. Import into Streisand.",
+    rocket: "One masque:// link per line. Copy and import into Shadowrocket.",
+    clash: "A full Mihomo (Clash Meta) YAML with DNS, rules and proxy groups. Needs a Mihomo-based client with MASQUE support. Download the .yaml and import it."
+  };
+
+  const ICO_WIN = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4.9 10.5 3.9V11H3zM11.5 3.8 21 2.5V11h-9.5zM3 12h7.5v7.1L3 18.1zM11.5 12H21v8.5l-9.5-1.3z"/></svg>';
+  const ICO_AND = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.5 10a5.5 5.5 0 0 1 11 0z"/><rect x="6.5" y="11" width="11" height="8" rx="1.2"/><rect x="3.5" y="11" width="2" height="6" rx="1"/><rect x="18.5" y="11" width="2" height="6" rx="1"/><rect x="8.5" y="18" width="2.2" height="4" rx="1.1"/><rect x="13.3" y="18" width="2.2" height="4" rx="1.1"/><path d="M8.3 3.3 9.8 5.8M15.7 3.3 14.2 5.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle cx="9.6" cy="7.6" r=".85" fill="#000"/><circle cx="14.4" cy="7.6" r=".85" fill="#000"/></svg>';
+  const ICO_IOS = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
+
+  const OS_LIST = [
+    ["windows", "Windows", ICO_WIN, [["pc", "v2rayN | Throne | OneXray"], ["clash", "Clash"]]],
+    ["android", "Android", ICO_AND, [["phone", "v2rayNG | Happ"], ["mahsa", "MahsaNG"], ["clash", "Clash"]]],
+    ["ios", "iOS", ICO_IOS, [["streisand", "Streisand"], ["rocket", "Shadowrocket"], ["clash", "Clash"]]]
+  ];
+
+  /* ======================= STATE / HELPERS ======================= */
+  let client = "phone", os = "android", l4 = false, fragment = false, withV6 = true, outText = "", outExt = "json";
+
+  const pemBody = (v = "") => String(v).replace(/-----(BEGIN|END)[^-]*-----/g, "").replace(/\s/g, "");
+  const enc = (v) => encodeURIComponent(String(v)).replace(/%2C/gi, ",");
+  const isV6Node = (n) => n.server.includes(":") || /IPv6/i.test(n.prefix);
+
+  function fill(sel, rows) {
+    sel.innerHTML = "";
+    rows.forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; sel.appendChild(o); });
+  }
+  (function initSelects() {
+    const ep = $("endpoint");
+    const g1 = document.createElement("optgroup"); g1.label = "Combined (multiple nodes)";
+    Object.entries(COMBINED).forEach(([k, c]) => { const o = document.createElement("option"); o.value = k; o.textContent = c.label; g1.appendChild(o); });
+    const g2 = document.createElement("optgroup"); g2.label = "Single endpoint (one node)";
+    SINGLES.forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; g2.appendChild(o); });
+    ep.append(g1, g2);
+    ep.value = "all";
+    fill($("port"), [["random", "All port combinations (default)"], ...PORTS.map((p) => [p, p === "443" ? "443 (standard port | beware of QoS throttling)" : p])]);
+    fill($("sni"), SNIS);
+    fill($("dns"), DNSES);
+    fill($("geoSource"), GEO_SOURCES.map(([v, l]) => [v, l]));
+  })();
+
+  /* ======================= ICONS FOR ENDPOINT LIST ======================= */
+  const stripes = [...Array(7)].map((_, i) => `<rect y="${(i * 2.4615).toFixed(3)}" width="24" height="1.2308" fill="#b22234"/>`).join("");
+  const FLAGS = {
+    US: `<rect width="24" height="16" fill="#fff"/>${stripes}<rect width="10.4" height="8.62" fill="#3c3b6e"/>`,
+    DE: '<rect width="24" height="5.34" fill="#000"/><rect y="5.34" width="24" height="5.33" fill="#dd0000"/><rect y="10.67" width="24" height="5.33" fill="#ffce00"/>',
+    FI: '<rect width="24" height="16" fill="#fff"/><rect x="6" width="4" height="16" fill="#003580"/><rect y="6" width="24" height="4" fill="#003580"/>',
+    HK: '<rect width="24" height="16" fill="#de2910"/><circle cx="12" cy="8" r="3.6" fill="#fff"/><circle cx="12" cy="8" r="1.2" fill="#de2910"/>',
+    JP: '<rect width="24" height="16" fill="#fff"/><circle cx="12" cy="8" r="4.8" fill="#bc002d"/>'
+  };
+  const flagSvg = (c) => `<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">${FLAGS[c]}</svg>`;
+  const G = (p) => `<svg class="gico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const ICON_GLOBE = G('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>');
+  const ICON_SERVER = G('<rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/>');
+  const ICON_LAYERS = G('<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>');
+  function iconFor(prefix) {
+    if (/^US/.test(prefix)) return flagSvg("US");
+    if (/^Germany/.test(prefix)) return flagSvg("DE");
+    if (/^Finland/.test(prefix)) return flagSvg("FI");
+    if (/^Hong Kong/.test(prefix)) return flagSvg("HK");
+    if (/^Japan/.test(prefix)) return flagSvg("JP");
+    if (/^Backup/.test(prefix)) return ICON_SERVER;
+    return ICON_GLOBE;
+  }
+  const EP_ICONS = {};
+  Object.keys(COMBINED).forEach((k) => { EP_ICONS[k] = ICON_LAYERS; });
+  SINGLES.forEach(([v, , prefix]) => { EP_ICONS[v] = iconFor(prefix); });
+
+  /* ======================= COMPACT IN-PLACE DROPDOWNS (all selects) ======================= */
+  function buildDD(sel, icons) {
+    const root = document.createElement("div");
+    root.className = "dd";
+    root.innerHTML = '<button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false"></button><div class="dd-panel" role="listbox" hidden></div>';
+    sel.after(root); sel.hidden = true;
+    const btn = root.querySelector(".dd-btn"), panel = root.querySelector(".dd-panel");
+    const items = [];
+    const icon = (v) => (icons && icons[v]) || "";
+    const addOpt = (o) => {
+      const d = document.createElement("div");
+      d.className = "dd-item"; d.setAttribute("role", "option");
+      d.innerHTML = icon(o.value) + '<span class="t"></span>'; d.querySelector(".t").textContent = o.textContent;
+      d.addEventListener("click", () => { sel.value = o.value; sel.dispatchEvent(new Event("change")); close(); });
+      panel.appendChild(d); items.push({ o, d });
+    };
+    [...sel.children].forEach((c) => {
+      if (c.tagName === "OPTGROUP") {
+        const g = document.createElement("div"); g.className = "dd-group"; g.textContent = c.label; panel.appendChild(g);
+        [...c.children].forEach(addOpt);
+      } else addOpt(c);
+    });
+    const show = () => {
+      const o = sel.options[sel.selectedIndex]; if (!o) return;
+      btn.innerHTML = icon(o.value) + '<span class="t"></span>'; btn.querySelector(".t").textContent = o.textContent;
+      items.forEach((x) => x.d.classList.toggle("sel", x.o === o));
+    };
+    function close() { panel.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+    btn.addEventListener("click", () => {
+      const open = panel.hidden; panel.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+      if (open) { const s = panel.querySelector(".dd-item.sel"); if (s) s.scrollIntoView({ block: "nearest" }); }
+    });
+    document.addEventListener("click", (ev) => { if (!root.contains(ev.target)) close(); });
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") close(); });
+    sel.addEventListener("change", show);
+    show();
+  }
+  ["mode", "count", "region", "endpoint", "port", "sni", "dns", "noise", "geoSource"].forEach((id) => buildDD($(id), id === "endpoint" ? EP_ICONS : null));
+
+  /* ======================= COPY / DOWNLOAD ======================= */
+  function legacyCopy(text) {
+    let ta;
+    try {
+      ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:-9999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus({ preventScroll: true }); ta.select();
+      try { ta.setSelectionRange(0, text.length); } catch (_) {}
+      const ok = document.execCommand("copy");
+      return ok;
+    } catch (_) { return false; }
+    finally { if (ta && ta.parentNode) ta.parentNode.removeChild(ta); }
+  }
+  async function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); return "copied"; } catch (_) {}
+    }
+    if (legacyCopy(text)) return "copied";
+    return "failed";
+  }
+  function flash(btn, text) {
+    const t = btn.querySelector(".bt") || btn;
+    const old = btn.dataset.label || t.textContent;
+    btn.dataset.label = old; t.textContent = text;
+    setTimeout(() => { t.textContent = old; }, 1600);
+  }
+
+  /* ======================= GENERATION ======================= */
+  // Round-robin over servers so a small cap still covers different endpoints and ports
+  function diversify(list) {
+    const by = new Map();
+    list.forEach((x) => { if (!by.has(x.server)) by.set(x.server, []); by.get(x.server).push(x); });
+    const arrs = [...by.values()], out = [];
+    for (let r = 0; out.length < list.length; r++) arrs.forEach((a) => { if (a[r]) out.push(a[r]); });
+    return out;
+  }
+  function getCount() { const n = parseInt($("count").value, 10); return Math.min(10, Math.max(1, isNaN(n) ? 1 : n)); }
+
+  function nodesForSelection() {
+    const ep = $("endpoint").value, portSel = $("port").value, n = getCount();
+    const all = [];
+    const ranged = (server, prefix) => (portSel === "random" ? PORTS : [portSel]).forEach((port) => all.push({ server, port, prefix }));
+    if (COMBINED[ep]) {
+      COMBINED[ep].ranged.forEach(([s, p]) => ranged(s, p));
+      COMBINED[ep].fixed.forEach((x) => all.push({ ...x }));
+    } else {
+      const row = SINGLES.find((x) => x[0] === ep);
+      ranged(ep, row ? row[2] : "MASQUE");
+    }
+    const v4 = diversify(all.filter((x) => !isV6Node(x))), v6 = diversify(all.filter(isV6Node));
+    let picked;
+    if (!v4.length || !v6.length) picked = (v4.length ? v4 : v6).slice(0, n);
+    else {
+      let a = Math.ceil(n / 2), b = n - a;               // half IPv4, half IPv6 (extra one goes to IPv4)
+      if (a > v4.length) { b += a - v4.length; a = v4.length; }
+      if (b > v6.length) { a += b - v6.length; b = v6.length; }
+      picked = [...v4.slice(0, a), ...v6.slice(0, b)];
+    }
+    return picked.map((x) => ({ ...x, suffix: SUFFIX }));
+  }
+
+  function currentKey() {
+    return {
+      priv: $("privKey").value.trim(),
+      pub: pemBody($("pubKey").value),
+      v4: $("ipv4").value.trim(),
+      v6: $("ipv6").value.trim()
+    };
+  }
+
+  function setOut(text, ext, pill, pillWarn, hint) {
+    outText = text || ""; outExt = ext || "json";
+    $("preview").textContent = text || "# Live preview ...";
+    $("copyBtn").disabled = $("dlBtn").disabled = !text;
+    $("outPill").textContent = pill;
+    $("outPill").classList.toggle("warn", !!pillWarn);
+    $("outHint").textContent = hint;
+  }
+
+  function generate() {
+    const k = currentKey();
+    const missing = [];
+    if (!k.priv) missing.push("private key");
+    if (!k.pub) missing.push("endpoint public key");
+    if (!k.v4) missing.push("IPv4");
+    if (missing.length) { setOut("", "json", "Waiting for key", true, "Missing: " + missing.join(", ") + ". Generate or import a key."); return; }
+
+    const mode = $("mode").value, sni = $("sni").value, dnsVal = $("dns").value;
+    const nodes = nodesForSelection();
+    if (!nodes.length) { setOut("", "json", "No nodes", true, "No nodes for this selection. Change the endpoint or the port."); return; }
+
+    const tag = (n) => `${mode.toUpperCase()} | ${n.prefix} | ${n.server} | ${n.port} | ${n.suffix}`;
+    const label = nodes.length + (nodes.length === 1 ? " node" : " nodes") + (COMBINED[$("endpoint").value] ? " (combined)" : " (single endpoint)");
+
+    if (client === "clash") {
+      const isL4 = l4, finalUdp = !isL4;
+      const zero = $("endpoint").value === "zerotrust";
+      let dnsList = dnsVal.split(",").map((x) => x.trim()).filter(Boolean);
+      if (isL4 && dnsList.every((d) => PLAIN_DNS_RE.test(d))) dnsList = ["https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"];
+      const sniFinal = isL4 ? (zero ? "zt-masque-proxy.cloudflareclient.com" : "consumer-masque-proxy.cloudflareclient.com") : sni;
+      const netLine = mode === "h2" && !isL4 ? "\n    network: h2" : isL4 ? "\n    network: h3-l4proxy" : "";
+      const nodeName = (n) => `${n.prefix} | ${n.server} | ${n.port} | ${n.suffix}`;
+      const proxiesYaml = nodes.map((n) => `  - name: "${nodeName(n)}"
+    type: masque
+    server: ${n.server}
+    port: ${n.port}
+    private-key: ${k.priv}
+    public-key: ${k.pub}
+    ip: ${k.v4.replace(/\/\d+$/, "")}${withV6 && k.v6 ? `\n    ipv6: ${k.v6.replace(/\/\d+$/, "")}` : ""}
+    uri: https://cloudflareaccess.com
+    mtu: 1280
+    udp: ${finalUdp}
+    remote-dns-resolve: true
+    congestion-controller: bbr
+    dns: [ ${dnsList.join(", ")} ]
+    sni: ${sniFinal}${netLine}`).join("\n\n");
+      const names = "[" + nodes.map((n) => `"${nodeName(n)}"`).join(", ") + "]";
+      const region = $("region").value;
+      let geoKey = $("geoSource").value;
+      if (region === "ir" && !IR_GEO_OK.includes(geoKey)) geoKey = "metacubexIr";
+      const geo = (GEO_SOURCES.find((g) => g[0] === geoKey) || GEO_SOURCES[0])[2];
+      let tplText = (window.CLASH_TEMPLATE || "").replace(/[ \t]+$/gm, "");
+      if (region === "ir") tplText = toIranClash(tplText);
+      const geoBlock = Object.entries(geo).map(([a, b]) => `  ${a}: "${b}"`).join("\n");
+      const v6on = nodes.some(isV6Node) || dnsList.some((d) => d.includes(":") && !/^https?:/.test(d));
+      const d = new Date(), z = (x) => String(x).padStart(2, "0");
+      const stamp = `# Generated - ${d.getFullYear()}/${z(d.getMonth() + 1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`;
+      const header = [stamp, ...NOTES.map((x) => "# " + x).map((x, i) => (i === 0 ? x.replace("v2ray client", "Clash client").replace("Xray core", "Mihomo core") : x))].join("\n");
+      const yaml = tplText
+        .replace("__HEADER__", () => header)
+        .replace("__DNS_ENHANCED_MODE__", () => "enhanced-mode: fake-ip")
+        .replace("__GEOX_URL_BLOCK__", () => geoBlock)
+        .replace("__GLOBAL_IPV6__", () => String(v6on))
+        .replace("__DNS_IPV6__", () => String(v6on))
+        .replace(/__MASQUE_PROXIES__/g, () => names)
+        .replace("__NODES__", () => proxiesYaml)
+        .replace(/__LATENCY_TEST_URL__/g, "https://cloudflare.com/cdn-cgi/trace")
+        .replace(/__LATENCY_INTERVAL__/g, "300")
+        .replace(/__LATENCY_TOLERANCE__/g, "30")
+        .replace("__CHAIN_PROXIES__", "[DIRECT]")
+        .replace("__EXIT_PROXIES__", "[DIRECT]");
+      setOut(yaml, "yaml", label, false, "Ready. Download the .yaml (or copy it) and import it into your Clash client.");
+      return;
+    }
+
+    if (client === "rocket") {
+      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["flag", ""], ["sni", sni]]
+        .map(([a, b]) => `${a}=${enc(b)}`).join("&");
+      const name = $("nodeName").value.trim() || "WARP-MASQUE";
+      const text = nodes.map((n) => `masque://${n.server.includes(":") ? `[${n.server}]` : n.server}:${n.port}?${params}#${enc(name)}`).join("\n");
+      setOut(text, "txt", label, false, "Ready. Copy the links and import them into Shadowrocket.");
+      return;
+    }
+
+    const address = [k.v4 + (/\/\d+$/.test(k.v4) ? "" : "/32")];
+    if (withV6 && k.v6) address.push(k.v6 + (/\/\d+$/.test(k.v6) ? "" : "/128"));
+    const dnsArray = dnsVal.split(",").map((s) => s.trim()).filter(Boolean);
+
+    if (client === "mahsa") {
+      const first = dnsArray[0] || "1.1.1.1";
+      const mtu = $("mtu").value.trim() || "1280", keep = $("keep").value.trim() || "5", noise = $("noise").value;
+      const raw = k.priv.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+      const pemKey = (x) => { const L = /^MHcCAQEE/.test(x) ? "EC PRIVATE KEY" : "PRIVATE KEY"; return "-----BEGIN " + L + "-----\n" + (x.match(/.{1,64}/g) || []).join("\n") + "\n-----END " + L + "-----\n"; };
+      const hostOf = (n) => (n.server.includes(":") ? `[${n.server}]` : n.server);
+      if ($("mahsaFmt").value === "link") {
+        const links = nodes.map((n) => {
+          const q = [["transport", mode], ["address", address.join(",")], ["mtu", mtu], ["remoteDNS", first], ["sni", sni], ["insecure", 1], ["keepalive", keep]];
+          if (noise) q.push(["wnoise", noise], ["wnoisecount", "15"], ["wnoisedelay", "1-2"], ["wpayloadsize", "5-10"]);
+          return `masque://${encodeURIComponent(raw)}@${hostOf(n)}:${n.port}?${q.map(([a, b]) => a + "=" + encodeURIComponent(b)).join("&")}#${encodeURIComponent(tag(n))}`;
+        });
+        setOut(links.join("\n"), "txt", label, false, "Ready. Copy the links and import them into MahsaNG.");
+        return;
+      }
+      const cfgs = nodes.map((n) => {
+        const st = { address, endpoint: hostOf(n) + ":" + n.port, keepAlivePeriod: +keep, mtu: +mtu, privateKey: pemKey(raw), remoteDNS: [first], transport: mode };
+        if (noise) Object.assign(st, { wnoise: noise, wnoisecount: "15", wnoisedelay: "1-2", wpayloadsize: "5-10" });
+        return {
+          dns: { hosts: { "geosite:category-porn": "127.0.0.1", "domain:googleapis.cn": "googleapis.com" }, servers: ["8.8.8.8"] },
+          inbounds: [
+            { listen: "127.0.0.1", port: 10808, protocol: "socks", settings: { auth: "noauth", udp: true, userLevel: 8 }, sniffing: { destOverride: ["http", "tls"], enabled: true }, tag: "socks" },
+            { listen: "127.0.0.1", port: 10809, protocol: "http", settings: { userLevel: 8 }, tag: "http" }
+          ],
+          log: { access: "none", loglevel: "warning" },
+          outbounds: [
+            { protocol: "masque", settings: st, streamSettings: { network: "tcp", security: "tls", tlsSettings: { allowInsecure: true, alpn: [mode], serverName: sni, show: false } }, tag: "proxy" },
+            { protocol: "freedom", settings: {}, tag: "direct" },
+            { protocol: "blackhole", settings: { response: { type: "http" } }, tag: "block" }
+          ],
+          remarks: tag(n),
+          routing: { domainStrategy: "AsIs", rules: [
+            { ip: ["8.8.8.8"], outboundTag: "proxy", port: "53", type: "field" },
+            { domain: ["domain:ir", "geosite:category-ir", "geosite:private"], outboundTag: "direct", type: "field" },
+            { ip: ["geoip:ir", "geoip:private"], outboundTag: "direct", type: "field" },
+            { domain: ["geosite:category-porn"], outboundTag: "block", type: "field" },
+            { ip: ["10.10.34.34", "10.10.34.35", "10.10.34.36"], outboundTag: "block", type: "field" }
+          ] }
+        };
+      });
+      setOut(JSON.stringify(cfgs.length === 1 ? cfgs[0] : cfgs, null, 2), "json", label, false, "Ready. Copy or download the JSON and import it into MahsaNG.");
+      return;
+    }
+
+    const outbound = (n, t) => {
+      const ss = {
+        method: "masque",
+        masqueSettings: { warp: { privateKey: k.priv, publicKey: k.pub, address } },
+        security: "tls",
+        tlsSettings: { serverName: sni, alpn: [mode] }
+      };
+      if (fragment) {
+        ss.finalmask = mode === "h2"
+          ? { tcp: [{ type: "fragment", settings: { packets: "tlshello", lengths: ["100-200"], delays: ["10-20"] } }] }
+          : { udp: [{ type: "noise", settings: { reset: "10-30", type: "exp", packet: "<b 0d0a0d0a><t><r 24>" } }] };
+      }
+      return JSON.stringify({ protocol: "masque", settings: { address: n.server, port: parseInt(n.port, 10), remoteDNS: dnsArray }, streamSettings: ss, tag: t }, null, 2);
+    };
+
+    let json;
+    if (client === "phone" || client === "streisand") {
+      const items = nodes.map((n) => {
+        const o = JSON.parse(withNotes(window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ITEM || "{}").replace("__MASQUE_OUTBOUND__", () => outbound(n, "proxy")));
+        if ($("region").value === "ir") toIranXray(o);
+        o.remarks = tag(n);
+        return JSON.stringify(o, null, 2);
+      });
+      json = (window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_PREFIX || "[") + items.join(",\n") + (window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_SUFFIX || "\n]");
+    } else {
+      json = withNotes(window.MIHOMO_MASQUE_TEMPLATE || "").replace("__NODES__", () => nodes.map((n) => outbound(n, tag(n))).join(",\n"));
+    }
+    try { json = JSON.stringify(JSON.parse(json), null, 2); } catch (_) {}
+    setOut(json, "json", label, false, "Ready. Copy or download the JSON, then import it into your client.");
+  }
+
+  /* ======================= KEY REGISTRATION (API pool) ======================= */
+  const host = (u) => u.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  function nextIndex() { try { return (parseInt(localStorage.getItem("masque_api_idx") || "0", 10) || 0) % APIS.length; } catch (_) { return 0; } }
+  function saveNext(i) { try { localStorage.setItem("masque_api_idx", String((i + 1) % APIS.length)); } catch (_) {} }
+
+  function renderChips(state = {}) {
+    const next = nextIndex();
+    $("apiChips").innerHTML = "";
+    APIS.forEach((u, i) => {
+      const s = document.createElement("span");
+      s.className = "api" + (state[i] === "used" ? " used" : state[i] === "fail" ? " fail" : i === next ? " next" : "");
+      s.textContent = "API" + (i + 1) + (state[i] === "used" ? " ✓" : state[i] === "fail" ? " ✗" : "");
+      s.title = host(u);
+      $("apiChips").appendChild(s);
+    });
+  }
+
+  function explain(err, text, status) {
+    if (/1015/.test(text || "")) return "rate limited by Cloudflare (error 1015), wait a few minutes";
+    if (/1020|1010|1006|1009/.test(text || "")) return "blocked by Cloudflare firewall (" + (text || "").trim().slice(0, 40) + ")";
+    if (err && err.name === "TimeoutError") return "timeout";
+    if (err && err.name === "TypeError") return "network or CORS error (the API must send Access-Control-Allow-Origin)";
+    if (err && err.message) return err.message;
+    return "HTTP " + status;
+  }
+
+  const COOL_MS = 300000; // 5 min: retrying earlier keeps the 1015 ban alive
+  const coolKey = (i) => "masque_cool_" + i;
+  const coolLeft = (i) => { try { return Math.max(0, (parseInt(localStorage.getItem(coolKey(i)) || "0", 10) || 0) - Date.now()); } catch (_) { return 0; } };
+  const setCool = (i) => { try { localStorage.setItem(coolKey(i), String(Date.now() + COOL_MS)); } catch (_) {} };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function applyConfig(c, label) {
+    const cfg = c && c.content && c.content.private_key ? c.content : c;
+    const miss = ["private_key", "endpoint_pub_key", "ipv4"].filter((x) => !cfg || !cfg[x]);
+    if (miss.length) throw new Error("response lacks " + miss.join(", "));
+    $("privKey").value = String(cfg.private_key).trim();
+    $("pubKey").value = pemBody(cfg.endpoint_pub_key);
+    $("ipv4").value = String(cfg.ipv4); $("ipv6").value = cfg.ipv6 ? String(cfg.ipv6) : "";
+    $("keyStatus").className = "status ok";
+    $("keyStatus").textContent = `✓ Key loaded ${label}. Account id: ${cfg.id || "n/a"}`;
+  }
+
+  // Each API is called with a plain GET and returns {private_key, endpoint_pub_key, ipv4, ipv6, ...}
+  async function register() {
+    const start = nextIndex(), state = {}, errors = [];
+    let sent = 0;
+    for (let step = 0; step < APIS.length; step++) {
+      const i = (start + step) % APIS.length;
+      const wait = coolLeft(i);
+      if (wait > 0) { state[i] = "fail"; errors.push(`${host(APIS[i])}: cooling down (${Math.ceil(wait / 1000)}s left)`); continue; }
+      if (sent++) await sleep(1200);
+      $("keyStatus").className = "status";
+      $("keyStatus").textContent = `Requesting a key from API ${i + 1}/${APIS.length} (${host(APIS[i])}) ...`;
+      let text = "", status = 0;
+      try {
+        const r = await fetch(APIS[i], { method: "GET", credentials: "omit", referrerPolicy: "no-referrer", signal: AbortSignal.timeout(30000) });
+        status = r.status; text = await r.text();
+        let data; try { data = JSON.parse(text); } catch (_) { throw new Error("not JSON: " + text.trim().slice(0, 60)); }
+        if (data && data.success === false) throw new Error(data.message || "API reported failure");
+        applyConfig(data, `from API ${i + 1}/${APIS.length} (${host(APIS[i])})`);
+        state[i] = "used"; saveNext(i); renderChips(state);
+        return;
+      } catch (err) {
+        state[i] = "fail"; if (/1015/.test(text)) setCool(i);
+        errors.push(`${host(APIS[i])}: ${explain(err, text, status)}`);
+        renderChips(state);
+      }
+    }
+    throw new Error(sent ? "All APIs failed (rate limit). Wait about 5 minutes before trying again, or use the manual option below. " + errors.join(" | ") : "All APIs are cooling down after a rate limit. No request was sent. Wait a few minutes, then try again. " + errors.join(" | "));
+  }
+
+  $("genBtn").addEventListener("click", async () => {
+    const btn = $("genBtn"); btn.classList.add("loading"); btn.disabled = true;
+    try { await register(); }
+    catch (err) { $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + (err && err.message || err); }
+    finally { btn.classList.remove("loading"); btn.disabled = false; generate(); }
+  });
+
+  // Manual fallback: paste the JSON that an API link shows in the browser
+  $("pasteBox").addEventListener("input", () => {
+    const t = $("pasteBox").value.trim(); if (!t) return;
+    try { applyConfig(JSON.parse(t), "from pasted JSON"); $("pasteBox").value = ""; }
+    catch (err) { $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ Pasted text is not a valid key JSON: " + (err && err.message || err); }
+    generate();
+  });
+  (function manualLinks() {
+    const box = $("manualLinks");
+    const LINK = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>';
+    APIS.forEach((u, i) => {
+      const a = document.createElement("a");
+      a.href = u; a.target = "_blank"; a.rel = "noopener";
+      a.className = "btn xs";
+      a.title = "Open API " + (i + 1);
+      a.setAttribute("aria-label", "Open API " + (i + 1));
+      a.innerHTML = LINK + "<span>API " + (i + 1) + "</span>";
+      box.appendChild(a);
+    });
+  })();
+
+  $("importBtn").addEventListener("click", () => $("fileInput").click());
+  $("fileInput").addEventListener("change", async (ev) => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    try {
+      const c = JSON.parse(await f.text());
+      const miss = ["private_key", "endpoint_pub_key", "ipv4"].filter((x) => !c[x]);
+      if (miss.length) throw new Error("Missing required fields: " + miss.join(", "));
+      $("privKey").value = String(c.private_key).trim(); $("pubKey").value = pemBody(c.endpoint_pub_key);
+      $("ipv4").value = String(c.ipv4); $("ipv6").value = c.ipv6 ? String(c.ipv6) : "";
+      $("keyStatus").className = "status ok"; $("keyStatus").textContent = "✓ Imported " + f.name;
+    } catch (err) {
+      $("keyStatus").className = "status err"; $("keyStatus").textContent = "✗ " + (err && err.message || "Unable to parse JSON");
+    }
+    ev.target.value = ""; generate();
+  });
+  $("clearBtn").addEventListener("click", () => {
+    ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => ($(id).value = ""));
+    $("keyStatus").className = "status"; $("keyStatus").textContent = "No key yet. Generate one or import a usque JSON file.";
+    generate();
+  });
+
+  /* ======================= UI WIRING ======================= */
+  function setToggle(btn, on) { btn.classList.toggle("on", on); btn.setAttribute("aria-checked", String(on)); }
+  $("v6Toggle").addEventListener("click", () => { withV6 = !withV6; setToggle($("v6Toggle"), withV6); generate(); });
+  $("l4Toggle").addEventListener("click", () => { l4 = !l4; setToggle($("l4Toggle"), l4); generate(); });
+  $("fragToggle").addEventListener("click", () => { fragment = !fragment; setToggle($("fragToggle"), fragment); generate(); });
+
+  // Client picker: OS tabs (Windows / Android / iOS) + only the clients of the selected OS
+  function applyGeoDefault() {
+    if (client !== "clash") return;
+    const g = $("region").value === "ir" ? "metacubexIr" : (os === "windows" ? "loyalsoldier" : "metacubex");
+    $("geoSource").value = g; $("geoSource").dispatchEvent(new Event("change"));
+  }
+  function setClient(v) {
+    client = v;
+    $("clientSub").querySelectorAll("button").forEach((x) => x.classList.toggle("active", x.dataset.v === v));
+    $("clientHint").textContent = CLIENT_HINTS[v];
+    $("mahsaOpts").hidden = v !== "mahsa";
+    $("clashOpts").hidden = v !== "clash";
+    $("regionField").hidden = !["clash", "phone", "streisand"].includes(v);
+    applyGeoDefault();
+    generate();
+  }
+  function setOS(osName) {
+    const row = OS_LIST.find((x) => x[0] === osName) || OS_LIST[1];
+    os = row[0];
+    if (window.showClientsOS) window.showClientsOS(os);
+    $("osTabs").querySelectorAll("button").forEach((x) => x.classList.toggle("active", x.dataset.os === row[0]));
+    const sub = $("clientSub"); sub.innerHTML = "";
+    row[3].forEach(([v, name]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.dataset.v = v; b.textContent = name;
+      b.addEventListener("click", () => setClient(v));
+      sub.appendChild(b);
+    });
+    setClient(row[3][0][0]);
+  }
+  OS_LIST.forEach(([os, name, ico]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.os = os; b.innerHTML = ico + "<span></span>"; b.querySelector("span").textContent = name;
+    b.addEventListener("click", () => setOS(os));
+    $("osTabs").appendChild(b);
+  });
+
+  ["mode", "endpoint", "port", "sni", "dns", "count", "region", "nodeName", "mahsaFmt", "noise", "geoSource"].forEach((id) => $(id).addEventListener("change", generate));
+  $("region").addEventListener("change", applyGeoDefault);
+  $("nodeName").addEventListener("input", generate);
+  ["mtu", "keep"].forEach((id) => $(id).addEventListener("input", generate));
+  ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => $(id).addEventListener("input", generate));
+
+  $("copyBtn").addEventListener("click", async () => {
+    if (!outText) return;
+    const r = await copyText(outText);
+    if (r === "copied") flash($("copyBtn"), "Copied");
+    else { flash($("copyBtn"), "Copy failed"); try { window.prompt("Automatic copy failed. Press Ctrl+C (Cmd+C) to copy:", outText); } catch (_) {} }
+  });
+  $("dlBtn").addEventListener("click", () => {
+    if (!outText) return;
+    const modeName = client === "clash" && l4 ? "h3-l4" : $("mode").value;
+    const name = client === "clash" ? `MASQUE-To-Clash-${modeName.toUpperCase()}.yaml` : `masque-${client === "rocket" ? "shadowrocket" : client === "mahsa" ? "mahsang" : "xray-" + client}-${$("mode").value}.${outExt}`;
+    const blob = new Blob([outText], { type: outExt === "json" ? "application/json" : outExt === "yaml" ? "application/yaml;charset=utf-8" : "text/plain" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    flash($("dlBtn"), "Downloaded");
+  });
+
+  // optional deep link: ?mode=h2|h3
+  try { const m = new URLSearchParams(location.search).get("mode"); if (m === "h2" || m === "h3") { $("mode").value = m; $("mode").dispatchEvent(new Event("change")); } } catch (_) {}
+
+  // Trace link: open in a new tab; if the browser/sandbox blocks that, open in the same tab
+  $("traceLink").addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const url = ev.currentTarget.href;
+    let w = null;
+    try { w = window.open(url, "_blank", "noopener,noreferrer"); } catch (_) {}
+    if (!w) { try { window.top.location.href = url; } catch (_) { window.location.href = url; } }
+  });
+
+  document.querySelectorAll("#fmtSwitch button").forEach((b) => b.addEventListener("click", () => {
+    $("mahsaFmt").value = b.dataset.v;
+    document.querySelectorAll("#fmtSwitch button").forEach((x) => x.classList.toggle("active", x === b));
+    generate();
+  }));
+
+  /* ======================= FOOTER: CLIENT DOWNLOADS ======================= */
+  (function clientsFooter() {
+    const I = {
+      gh: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>',
+      gp: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 2.4v19.2c0 .4.45.65.8.43l16-9.6a.5.5 0 0 0 0-.86l-16-9.6a.5.5 0 0 0-.8.43z"/></svg>',
+      ios: ICO_IOS
+    };
+    const NAMES = { gh: "GitHub", gp: "Google Play", ios: "App Store" };
+    const GH = (x) => "https://github.com/" + x;
+    const PLAY = (id) => "https://play.google.com/store/apps/details?id=" + id;
+    const APP = (slug, id) => "https://apps.apple.com/app/" + slug + "/id" + id;
+
+    // [OS, icon, [[client, {gh, gp, ios}], ...]]
+    const GROUPS = [
+      ["Windows", ICO_WIN, [
+        ["v2rayN", { gh: GH("2dust/v2rayN") }],
+        ["Throne", { gh: GH("throneproj/Throne") }],
+        ["OneXray", { gh: GH("OneXray/OneXray") }],
+        ["Clash Verge Rev", { gh: GH("clash-verge-rev/clash-verge-rev") }],
+        ["Mihomo Party", { gh: GH("mihomo-party-org/mihomo-party") }]
+      ]],
+      ["Android", ICO_AND, [
+        ["v2rayNG", { gh: GH("2dust/v2rayNG"), gp: PLAY("com.v2ray.ang") }],
+        ["Happ", { gp: PLAY("com.happproxy") }],
+        ["MahsaNG", { gh: GH("GFW-knocker/MahsaNG") }],
+        ["FlClash", { gh: GH("chen08209/FlClash") }],
+        ["Clash Meta for Android", { gh: GH("MetaCubeX/ClashMetaForAndroid") }]
+      ]],
+      ["iOS", ICO_IOS, [
+        ["Streisand", { ios: APP("streisand", "6450534064") }],
+        ["Shadowrocket", { ios: APP("shadowrocket", "932747118") }],
+        ["Happ", { ios: APP("happ-proxy-utility", "6504287215") }],
+        ["Stash", { ios: APP("stash-rule-based-proxy", "1596063349") }]
+      ]]
+    ];
+
+    const box = $("clientsList");
+    const tabs = document.createElement("div"); tabs.className = "switch os-tabs"; tabs.setAttribute("role", "tablist");
+    const list = document.createElement("div"); list.className = "cl-list";
+    box.append(tabs, list);
+
+    function show(osName) {
+      const g = GROUPS.find((x) => x[0].toLowerCase() === osName) || GROUPS[1];
+      tabs.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x.dataset.os === g[0].toLowerCase()));
+      list.innerHTML = "";
+      g[2].forEach(([name, links]) => {
+        const it = document.createElement("div"); it.className = "cl-item";
+        const n = document.createElement("span"); n.className = "cl-name"; n.textContent = name;
+        const ls = document.createElement("span"); ls.className = "cl-links";
+        ["gh", "gp", "ios"].forEach((k) => {
+          if (!links[k]) return;
+          const a = document.createElement("a");
+          a.className = "cl-link"; a.href = links[k]; a.target = "_blank"; a.rel = "noopener noreferrer";
+          a.title = name + " - " + NAMES[k]; a.innerHTML = I[k] + "<span></span>"; a.querySelector("span").textContent = NAMES[k];
+          ls.appendChild(a);
+        });
+        it.append(n, ls); list.appendChild(it);
+      });
+    }
+    GROUPS.forEach(([osName, ico]) => {
+      const bt = document.createElement("button");
+      bt.type = "button"; bt.dataset.os = osName.toLowerCase(); bt.innerHTML = ico + "<span></span>"; bt.querySelector("span").textContent = osName;
+      bt.addEventListener("click", () => show(osName.toLowerCase()));
+      tabs.appendChild(bt);
+    });
+    window.showClientsOS = show;   // synced with the OS chosen in Step 2
+    show("android");
+  })();
+
+  setOS("android");
+  renderChips(); generate();
+})();
+
+</script>
+</body>
+</html>
