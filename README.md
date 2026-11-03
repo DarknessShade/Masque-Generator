@@ -10,7 +10,6 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Open_Tool-d4d4d8?style=for-the-badge&logo=githubpages&logoColor=black)](https://darknessshade.github.io/Masque-Generator/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Made with HTML](https://img.shields.io/badge/Single_File-index.html-orange?style=for-the-badge&logo=html5&logoColor=white)](index.html)
 [![Telegram](https://img.shields.io/badge/Telegram-ConfigWireguard-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/ConfigWireguard)
 
 <br>
