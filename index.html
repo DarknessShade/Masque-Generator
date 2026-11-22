@@ -1322,6 +1322,9 @@ __NODES__
     const mode = $("mode").value, sni = $("sni").value, dnsVal = $("dns").value;
     const nodes = nodesForSelection();
     if (!nodes.length) { setOut("", "json", "No nodes", true, "No nodes for this selection. Change the endpoint or the port."); return; }
+    // With more than one config: node 1 uses the selected SNI, the next nodes each get a different SNI from the list
+    const sniRest = SNIS.map((x) => x[0]).filter((v) => v !== sni && !/cloudflareclient\.com$/.test(v));
+    const sniOf = (i) => (i === 0 || nodes.length < 2 || !sniRest.length ? sni : sniRest[(i - 1) % sniRest.length]);
 
     const FLAG_EMOJI = { US: "\u{1F1FA}\u{1F1F8}", Germany: "\u{1F1E9}\u{1F1EA}", Finland: "\u{1F1EB}\u{1F1EE}" };
     const withFlag = (prefix) => prefix.replace(/^(US|Germany|Finland)\b/, (m) => m + " " + FLAG_EMOJI[m]);
@@ -1336,7 +1339,7 @@ __NODES__
       const sniFinal = isL4 ? (zero ? "zt-masque-proxy.cloudflareclient.com" : "consumer-masque-proxy.cloudflareclient.com") : sni;
       const netLine = mode === "h2" && !isL4 ? "\n    network: h2" : isL4 ? "\n    network: h3-l4proxy" : "";
       const nodeName = (n) => `${withFlag(n.prefix)} | ${n.server} | ${n.port} | ${n.suffix}`;
-      const proxiesYaml = nodes.map((n) => `  - name: "${nodeName(n)}"
+      const proxiesYaml = nodes.map((n, i) => `  - name: "${nodeName(n)}"
     type: masque
     server: ${n.server}
     port: ${n.port}
@@ -1349,7 +1352,7 @@ __NODES__
     remote-dns-resolve: true
     congestion-controller: bbr
     dns: [ ${dnsList.join(", ")} ]
-    sni: ${sniFinal}${netLine}`).join("\n\n");
+    sni: ${isL4 ? sniFinal : sniOf(i)}${netLine}`).join("\n\n");
       const names = "[" + nodes.map((n) => `"${nodeName(n)}"`).join(", ") + "]";
       const region = $("region").value;
       let geoKey = $("geoSource").value;
@@ -1380,10 +1383,10 @@ __NODES__
     }
 
     if (client === "rocket") {
-      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["sni", sni], ["h2", "1"], ["flag", "CDN"]]
-        .map(([a, b]) => `${a}=${enc(b)}`).join("&");
+      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["sni", sni], ["h2", "1"], ["flag", "CDN"]];
+      const paramsOf = (i) => params.map(([a, b]) => `${a}=${enc(a === "sni" ? sniOf(i) : b)}`).join("&");
       const name = $("nodeName").value.trim() || "WARP-MASQUE";
-      const text = nodes.map((n) => `masque://${n.server.includes(":") ? `[${n.server}]` : n.server}:${n.port}?${params}#${enc(name)}`).join("\n");
+      const text = nodes.map((n, i) => `masque://${n.server.includes(":") ? `[${n.server}]` : n.server}:${n.port}?${paramsOf(i)}#${enc(name)}`).join("\n");
       setOut(text, "txt", label, false, "Ready. Copy the links and import them into Shadowrocket.");
       return;
     }
@@ -1410,11 +1413,11 @@ __NODES__
         if (keyMeta.license) d.license = keyMeta.license;
         return d;
       };
-      const outs = nodes.map((n) => ({
+      const outs = nodes.map((n, i) => ({
         type: "masque",
         tag: `${modeTag} | ${withFlag(n.prefix)} | ${n.server} | ${n.port} | ${n.suffix}`,
         vhttp: hv,
-        server_name: sni || "consumer-masque.cloudflareclient.com",
+        server_name: sniOf(i) || "consumer-masque.cloudflareclient.com",
         use_ipv6: n.server.includes(":"),
         device: mkDevice(n)
       }));
@@ -1438,15 +1441,15 @@ __NODES__
       const pemKey = (x) => { const L = /^MHcCAQEE/.test(x) ? "EC PRIVATE KEY" : "PRIVATE KEY"; return "-----BEGIN " + L + "-----\n" + (x.match(/.{1,64}/g) || []).join("\n") + "\n-----END " + L + "-----\n"; };
       const hostOf = (n) => (n.server.includes(":") ? `[${n.server}]` : n.server);
       if ($("mahsaFmt").value === "link") {
-        const links = nodes.map((n) => {
-          const q = [["transport", mode], ["address", address.join(",")], ["mtu", mtu], ["remoteDNS", first], ["sni", sni], ["insecure", 1], ["keepalive", keep]];
+        const links = nodes.map((n, i) => {
+          const q = [["transport", mode], ["address", address.join(",")], ["mtu", mtu], ["remoteDNS", first], ["sni", sniOf(i)], ["insecure", 1], ["keepalive", keep]];
           if (noise) q.push(["wnoise", noise], ["wnoisecount", "15"], ["wnoisedelay", "1-2"], ["wpayloadsize", "5-10"]);
           return `masque://${encodeURIComponent(raw)}@${hostOf(n)}:${n.port}?${q.map(([a, b]) => a + "=" + encodeURIComponent(b)).join("&")}#${encodeURIComponent(tag(n))}`;
         });
         setOut(links.join("\n"), "txt", label, false, "Ready. Copy the links and import them into MahsaNG.");
         return;
       }
-      const cfgs = nodes.map((n) => {
+      const cfgs = nodes.map((n, i) => {
         const st = { address, endpoint: hostOf(n) + ":" + n.port, keepAlivePeriod: +keep, mtu: +mtu, privateKey: pemKey(raw), remoteDNS: [first], transport: mode };
         if (noise) Object.assign(st, { wnoise: noise, wnoisecount: "15", wnoisedelay: "1-2", wpayloadsize: "5-10" });
         return {
@@ -1457,7 +1460,7 @@ __NODES__
           ],
           log: { access: "none", loglevel: "warning" },
           outbounds: [
-            { protocol: "masque", settings: st, streamSettings: { network: "tcp", security: "tls", tlsSettings: { allowInsecure: true, alpn: [mode], serverName: sni, show: false } }, tag: "proxy" },
+            { protocol: "masque", settings: st, streamSettings: { network: "tcp", security: "tls", tlsSettings: { allowInsecure: true, alpn: [mode], serverName: sniOf(i), show: false } }, tag: "proxy" },
             { protocol: "freedom", settings: {}, tag: "direct" },
             { protocol: "blackhole", settings: { response: { type: "http" } }, tag: "block" }
           ],
@@ -1475,12 +1478,12 @@ __NODES__
       return;
     }
 
-    const outbound = (n, t) => {
+    const outbound = (n, t, i = 0) => {
       const ss = {
         method: "masque",
         masqueSettings: { warp: { privateKey: k.priv, publicKey: k.pub, address } },
         security: "tls",
-        tlsSettings: { serverName: sni, alpn: [mode] }
+        tlsSettings: { serverName: sniOf(i), alpn: [mode] }
       };
       if (fragment) {
         ss.finalmask = mode === "h2"
@@ -1492,15 +1495,15 @@ __NODES__
 
     let json;
     if (client === "phone" || client === "streisand") {
-      const items = nodes.map((n) => {
-        const o = JSON.parse(withNotes(window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ITEM || "{}").replace("__MASQUE_OUTBOUND__", () => outbound(n, "proxy")));
+      const items = nodes.map((n, i) => {
+        const o = JSON.parse(withNotes(window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ITEM || "{}").replace("__MASQUE_OUTBOUND__", () => outbound(n, "proxy", i)));
         if ($("region").value === "ir") toIranXray(o);
         o.remarks = tag(n);
         return JSON.stringify(o, null, 2);
       });
       json = (window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_PREFIX || "[") + items.join(",\n") + (window.MIHOMO_MASQUE_TEMPLATE_MOBILE_ARRAY_SUFFIX || "\n]");
     } else {
-      json = withNotes(window.MIHOMO_MASQUE_TEMPLATE || "").replace("__NODES__", () => nodes.map((n) => outbound(n, tag(n))).join(",\n"));
+      json = withNotes(window.MIHOMO_MASQUE_TEMPLATE || "").replace("__NODES__", () => nodes.map((n, i) => outbound(n, tag(n), i)).join(",\n"));
     }
     try { json = JSON.stringify(JSON.parse(json), null, 2); } catch (_) {}
     setOut(json, "json", label, false, "Ready. Copy or download the JSON, then import it into your client.");
