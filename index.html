@@ -231,6 +231,19 @@ footer{width:min(1100px,calc(100% - 28px));margin:-26px auto 40px}
         </div>
       </div>
     </div>
+    <div class="opts" id="hiddifyOpts" hidden>
+      <div class="lbl" style="margin-bottom:8px">Hiddify options</div>
+      <div class="grid2">
+        <div class="field"><label for="hdMode">Hiddify transport</label>
+          <select id="hdMode">
+            <option value="auto" selected>[ H3 + H2 ] Auto fallback (default)</option>
+            <option value="h3">[ H3 ] QUIC + TLS1.3</option>
+            <option value="h2">[ H2 ] TCP + TLS1.2</option>
+          </select>
+          <span class="hint">Used instead of the Transport setting above. H3-L4 is not supported.</span>
+        </div>
+      </div>
+    </div>
     <div class="opts" id="mahsaOpts" hidden>
       <div class="lbl" style="margin-bottom:8px">MahsaNG options</div>
       <div class="grid2">
@@ -1089,6 +1102,7 @@ __NODES__
     mahsa: "MahsaNG format: masque:// links or JSON configs, one per node. Choose below.",
     streisand: "A JSON list where every node is a full config with DNS and routing. Import into Streisand.",
     rocket: "One masque:// link per line. Copy and import into Shadowrocket.",
+    hiddify: "A sing-box JSON with one masque outbound per node. Download the .json and import it into Hiddify (v5.5.5 or newer). DNS and routing are set inside the client. If latency shows empty or times out, set the client test URL to https://cloudflare.com/cdn-cgi/trace.",
     clash: "A full Mihomo (Clash Meta) YAML with DNS, rules and proxy groups. Needs a Mihomo-based client with MASQUE support. Download the .yaml and import it."
   };
 
@@ -1097,13 +1111,13 @@ __NODES__
   const ICO_IOS = '<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
 
   const OS_LIST = [
-    ["windows", "Windows", ICO_WIN, [["pc", "v2rayN | Throne | OneXray"], ["clash", "Clash"]]],
-    ["android", "Android", ICO_AND, [["phone", "v2rayNG | Happ"], ["mahsa", "MahsaNG"], ["clash", "Clash"]]],
-    ["ios", "iOS", ICO_IOS, [["streisand", "Streisand"], ["rocket", "Shadowrocket"], ["clash", "Clash"]]]
+    ["windows", "Windows", ICO_WIN, [["pc", "v2rayN | Throne | OneXray"], ["hiddify", "Hiddify"], ["clash", "Clash"]]],
+    ["android", "Android", ICO_AND, [["phone", "v2rayNG | Happ"], ["mahsa", "MahsaNG"], ["hiddify", "Hiddify"], ["clash", "Clash"]]],
+    ["ios", "iOS", ICO_IOS, [["streisand", "Streisand"], ["rocket", "Shadowrocket"], ["hiddify", "Hiddify"], ["clash", "Clash"]]]
   ];
 
   /* ======================= STATE / HELPERS ======================= */
-  let client = "phone", os = "android", l4 = false, fragment = false, withV6 = true, outText = "", outExt = "json";
+  let client = "phone", os = "android", l4 = false, fragment = false, withV6 = true, outText = "", outExt = "json", keyMeta = {};
 
   const pemBody = (v = "") => String(v).replace(/-----(BEGIN|END)[^-]*-----/g, "").replace(/\s/g, "");
   const enc = (v) => encodeURIComponent(String(v)).replace(/%2C/gi, ",");
@@ -1191,7 +1205,7 @@ __NODES__
     sel.addEventListener("change", show);
     show();
   }
-  ["mode", "count", "region", "endpoint", "port", "sni", "dns", "noise", "geoSource"].forEach((id) => buildDD($(id), id === "endpoint" ? EP_ICONS : null));
+  ["mode", "count", "region", "endpoint", "port", "sni", "dns", "noise", "geoSource", "hdMode"].forEach((id) => buildDD($(id), id === "endpoint" ? EP_ICONS : null));
 
   /* ======================= COPY / DOWNLOAD ======================= */
   function legacyCopy(text) {
@@ -1374,6 +1388,45 @@ __NODES__
       return;
     }
 
+    if (client === "hiddify") {
+      const hv = $("hdMode").value, modeTag = hv.toUpperCase();
+      const priv = pemBody(k.priv);
+      const mkDevice = (n) => {
+        const v6 = n.server.includes(":");
+        const hp = v6 ? `[${n.server}]:${n.port}` : `${n.server}:${n.port}`;
+        const d = {
+          private_key: priv,
+          endpoint_public_key: k.pub,
+          ipv4: k.v4,
+          ipv6: withV6 ? k.v6 : "",
+          endpoint_v4: "",
+          endpoint_v6: "",
+          endpoint_h2_v4: "",
+          endpoint_h2_v6: ""
+        };
+        // Both the H3 and the H2 field are written so the core finds the endpoint in either mode
+        if (v6) { d.endpoint_v6 = hp; d.endpoint_h2_v6 = hp; } else { d.endpoint_v4 = hp; d.endpoint_h2_v4 = hp; }
+        if (keyMeta.id) d.id = keyMeta.id;
+        if (keyMeta.license) d.license = keyMeta.license;
+        return d;
+      };
+      const outs = nodes.map((n) => ({
+        type: "masque",
+        tag: `${modeTag} | ${withFlag(n.prefix)} | ${n.server} | ${n.port} | ${n.suffix}`,
+        vhttp: hv,
+        server_name: sni || "consumer-masque.cloudflareclient.com",
+        use_ipv6: n.server.includes(":"),
+        device: mkDevice(n)
+      }));
+      const doc = {
+        _Hiddify_Singbox: ["This config only works with the latest Hiddify client (newer than v5.5.5)", ...NOTES.slice(1)],
+        log: { level: "info" },
+        outbounds: [{ type: "direct", tag: "direct" }, ...outs]
+      };
+      setOut(`# profile-title: MASQUE-To-Hiddify-${modeTag}\n` + JSON.stringify(doc, null, 2), "json", label, false, "Ready. Download the .json and import it into Hiddify (v5.5.5 or newer). DNS is set inside the client.");
+      return;
+    }
+
     const address = [k.v4 + (/\/\d+$/.test(k.v4) ? "" : "/32")];
     if (withV6 && k.v6) address.push(k.v6 + (/\/\d+$/.test(k.v6) ? "" : "/128"));
     const dnsArray = dnsVal.split(",").map((s) => s.trim()).filter(Boolean);
@@ -1490,6 +1543,7 @@ __NODES__
     const miss = ["private_key", "endpoint_pub_key", "ipv4"].filter((x) => !cfg || !cfg[x]);
     if (miss.length) throw new Error("response lacks " + miss.join(", "));
     $("privKey").value = String(cfg.private_key).trim();
+    keyMeta = { id: cfg.id, license: cfg.license };
     $("pubKey").value = pemBody(cfg.endpoint_pub_key);
     $("ipv4").value = String(cfg.ipv4); $("ipv6").value = cfg.ipv6 ? String(cfg.ipv6) : "";
     savePub($("pubKey").value);
@@ -1574,6 +1628,7 @@ __NODES__
     if (!pub) throw new Error("the list has no endpoint public key. Generate or import one key first (it is remembered afterwards) or paste it into the Endpoint public key field");
 
     $("privKey").value = pemBody(k.private_key_raw || k.private_key);
+    keyMeta = { id: k.id, license: k.license };
     $("pubKey").value = pub; savePub(pub);
     $("ipv4").value = v4; $("ipv6").value = v6 || "";
     $("keyStatus").className = "status ok";
@@ -1621,7 +1676,7 @@ __NODES__
       const c = JSON.parse(await f.text());
       const miss = ["private_key", "endpoint_pub_key", "ipv4"].filter((x) => !c[x]);
       if (miss.length) throw new Error("Missing required fields: " + miss.join(", "));
-      $("privKey").value = String(c.private_key).trim(); $("pubKey").value = pemBody(c.endpoint_pub_key); savePub(c.endpoint_pub_key);
+      $("privKey").value = String(c.private_key).trim(); keyMeta = { id: c.id, license: c.license }; $("pubKey").value = pemBody(c.endpoint_pub_key); savePub(c.endpoint_pub_key);
       $("ipv4").value = String(c.ipv4); $("ipv6").value = c.ipv6 ? String(c.ipv6) : "";
       $("keyStatus").className = "status ok"; $("keyStatus").textContent = "✓ Imported " + f.name;
     } catch (err) {
@@ -1630,7 +1685,7 @@ __NODES__
     ev.target.value = ""; generate();
   });
   $("clearBtn").addEventListener("click", () => {
-    ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => ($(id).value = ""));
+    ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => ($(id).value = "")); keyMeta = {};
     Object.keys(rndCache).forEach((k) => delete rndCache[k]);
     $("keyStatus").className = "status"; $("keyStatus").textContent = "No key yet. Generate one or import a usque JSON file.";
     generate();
@@ -1654,6 +1709,7 @@ __NODES__
     $("clientHint").textContent = CLIENT_HINTS[v];
     $("mahsaOpts").hidden = v !== "mahsa";
     $("clashOpts").hidden = v !== "clash";
+    $("hiddifyOpts").hidden = v !== "hiddify";
     $("regionField").hidden = !["clash", "phone", "streisand"].includes(v);
     applyGeoDefault();
     generate();
@@ -1679,11 +1735,12 @@ __NODES__
     $("osTabs").appendChild(b);
   });
 
-  ["mode", "endpoint", "port", "sni", "dns", "count", "region", "nodeName", "mahsaFmt", "noise", "geoSource"].forEach((id) => $(id).addEventListener("change", generate));
+  ["mode", "endpoint", "port", "sni", "dns", "count", "region", "nodeName", "mahsaFmt", "noise", "geoSource", "hdMode"].forEach((id) => $(id).addEventListener("change", generate));
   $("region").addEventListener("change", applyGeoDefault);
   $("nodeName").addEventListener("input", generate);
   ["mtu", "keep"].forEach((id) => $(id).addEventListener("input", generate));
   ["privKey", "pubKey", "ipv4", "ipv6"].forEach((id) => $(id).addEventListener("input", generate));
+  $("privKey").addEventListener("input", () => { keyMeta = {}; });
 
   $("copyBtn").addEventListener("click", async () => {
     if (!outText) return;
@@ -1694,7 +1751,7 @@ __NODES__
   $("dlBtn").addEventListener("click", () => {
     if (!outText) return;
     const modeName = client === "clash" && l4 ? "h3-l4" : $("mode").value;
-    const name = client === "clash" ? `MASQUE-To-Clash-${modeName.toUpperCase()}.yaml` : `masque-${client === "rocket" ? "shadowrocket" : client === "mahsa" ? "mahsang" : "xray-" + client}-${$("mode").value}.${outExt}`;
+    const name = client === "hiddify" ? `MASQUE-To-Hiddify-${$("hdMode").value.toUpperCase()}.json` : client === "clash" ? `MASQUE-To-Clash-${modeName.toUpperCase()}.yaml` : `masque-${client === "rocket" ? "shadowrocket" : client === "mahsa" ? "mahsang" : "xray-" + client}-${$("mode").value}.${outExt}`;
     const blob = new Blob([outText], { type: outExt === "json" ? "application/json" : outExt === "yaml" ? "application/yaml;charset=utf-8" : "text/plain" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -1736,6 +1793,7 @@ __NODES__
       ["Windows", ICO_WIN, [
         ["v2rayN", { gh: GH("2dust/v2rayN") }],
         ["Throne", { gh: GH("throneproj/Throne") }],
+        ["Hiddify", { gh: GH("hiddify/hiddify-app") }],
         ["OneXray", { gh: GH("OneXray/OneXray") }],
         ["Clash Verge Rev", { gh: GH("clash-verge-rev/clash-verge-rev") }],
         ["Mihomo Party", { gh: GH("mihomo-party-org/mihomo-party") }]
@@ -1744,6 +1802,7 @@ __NODES__
         ["v2rayNG", { gh: GH("2dust/v2rayNG"), gp: PLAY("com.v2ray.ang") }],
         ["Happ", { gp: PLAY("com.happproxy") }],
         ["MahsaNG", { gh: GH("GFW-knocker/MahsaNG") }],
+        ["Hiddify", { gh: GH("hiddify/hiddify-app"), gp: PLAY("app.hiddify.com") }],
         ["FlClash", { gh: GH("chen08209/FlClash") }],
         ["Clash Meta for Android", { gh: GH("MetaCubeX/ClashMetaForAndroid") }]
       ]],
@@ -1751,6 +1810,7 @@ __NODES__
         ["Streisand", { ios: APP("streisand", "6450534064") }],
         ["Shadowrocket", { ios: APP("shadowrocket", "932747118") }],
         ["Happ", { ios: APP("happ-proxy-utility", "6504287215") }],
+        ["Hiddify", { ios: APP("hiddify-proxy-vpn", "6596777532") }],
         ["Stash", { ios: APP("stash-rule-based-proxy", "1596063349") }]
       ]]
     ];
