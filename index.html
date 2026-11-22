@@ -1383,7 +1383,7 @@ __NODES__
     }
 
     if (client === "rocket") {
-      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["sni", sni], ["h2", "1"], ["flag", "CDN"]];
+      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["sni", sni], ["h2", "1"], ["flag", "CDN"]];
       const paramsOf = (i) => params.map(([a, b]) => `${a}=${enc(a === "sni" ? sniOf(i) : b)}`).join("&");
       const name = $("nodeName").value.trim() || "WARP-MASQUE";
       const text = nodes.map((n, i) => `masque://${n.server.includes(":") ? `[${n.server}]` : n.server}:${n.port}?${paramsOf(i)}#${enc(name)}`).join("\n");
