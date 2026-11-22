@@ -969,7 +969,12 @@ __NODES__
   ];
 
   const SNIS = [
-    ["www.cloudflare.com", "Cloudflare website | www.cloudflare.com (default)"],
+    ["tgju.org", "TGJU | tgju.org (default)"],
+    ["www.cloudflare.com", "Cloudflare website | www.cloudflare.com"],
+    ["repo.steampowered.com", "Steam repo | repo.steampowered.com"],
+    ["profile.activision.com", "Activision | profile.activision.com"],
+    ["store.steampowered.com", "Steam store | store.steampowered.com"],
+    ["dynu.com", "Dynu | dynu.com"],
     ["speed.cloudflare.com", "Cloudflare speed test | speed.cloudflare.com"],
     ["cdnjs.cloudflare.com", "Cloudflare CDN | cdnjs.cloudflare.com"],
     ["cloudflare.dev", "Cloudflare developers | cloudflare.dev"],
@@ -1361,7 +1366,7 @@ __NODES__
     }
 
     if (client === "rocket") {
-      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["flag", ""], ["sni", sni]]
+      const params = [["publicKey", k.pub], ["privateKey", k.priv], ["ip", k.v4], ["dns", dnsVal], ["udp", "1"], ["sni", sni], ["h2", "1"], ["flag", "CDN"]]
         .map(([a, b]) => `${a}=${enc(b)}`).join("&");
       const name = $("nodeName").value.trim() || "WARP-MASQUE";
       const text = nodes.map((n) => `masque://${n.server.includes(":") ? `[${n.server}]` : n.server}:${n.port}?${params}#${enc(name)}`).join("\n");
